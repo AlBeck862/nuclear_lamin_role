@@ -15,7 +15,9 @@ import matplotlib.pyplot as plt
 import numpy as np 
 import cv2
 from PIL import Image
-np.set_printoptions(threshold=sys.maxsize)	# The terminal will not skip output lines.
+
+# The terminal will not skip output lines.
+np.set_printoptions(threshold=sys.maxsize)
 
 # ---------- Major Angle Analysis ----------
 def orientation_analysis(dim,img_part,angs):
