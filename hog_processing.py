@@ -1,6 +1,9 @@
 """
 * Python script to process images using Skimage's HOG function, as well as extensive custom analysis methods.
-* usage: python3 hog_processing_v3.py <filename> <cv2 image linger in ms>
+* usage: python3 hog_processing_v3.py
+*				<filename>					# Name of image
+*				<cv2 image linger in ms>	# Delay (milliseconds) between CV2 images
+*				<"hog" OR "input">			# Select "hog" for vectors to be overlayed on the HOG image, or "input" for vectors to be overlayed on the original image
 """
 
 # HOG information: https://www.analyticsvidhya.com/blog/2019/09/feature-engineering-images-introduction-hog-feature-descriptor/?utm_source=blog&utm_medium=3-techniques-extract-features-from-image-data-machine-learning
@@ -318,11 +321,20 @@ dy_vals = [(vectors[i][j][0][1]-vectors[i][j][1][1])*avg_px_intensities_normaliz
 # Duplicate the HOG image to enable returning both a vector output and a clean output
 img_vector = hog_image_rescaled
 
+# Set the image on which vectors will be overlayed
+if sys.argv[3] == "hog":
+	display_img = img_vector
+elif sys.argv[3] == "input":
+	display_img = img
+else:
+	print("Invalid argument in third position.")
+	sys.exit(0)
+
 # Define output image parameters
 screen_dpi = 227
 plt.figure(figsize=(len(img_vector)/screen_dpi,len(img_vector)/screen_dpi),dpi=screen_dpi)
 plt.imshow(
-	img_vector,				# Image name
+	display_img,			# Image name
 	alpha=1.0,				# Transparency setting
 	cmap="Greys_r",			# Grayscale colour map
 	origin="upper",			# Image origin in the top left corner
