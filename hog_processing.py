@@ -324,40 +324,52 @@ img_vector = hog_image_rescaled
 # Set the image on which vectors will be overlayed
 if sys.argv[3] == "hog":
 	display_img = img_vector
+	color_set = 255
 elif sys.argv[3] == "input":
 	display_img = img
+	color_set = (0,0,255)
 else:
 	print("Invalid argument in third position.")
 	sys.exit(0)
 
-# Define output image parameters
-screen_dpi = 227
-plt.figure(figsize=(len(img_vector)/screen_dpi,len(img_vector)/screen_dpi),dpi=screen_dpi)
-plt.imshow(
-	display_img,			# Image name
-	alpha=1.0,				# Transparency setting
-	cmap="Greys_r",			# Grayscale colour map
-	origin="upper",			# Image origin in the top left corner
-	interpolation="none",	# Image blurring off
-	resample=False,			# Image resampling off
-	aspect="equal")			# Image distorting off
+# display_img = cv2.cvtColor(display_img,cv2.COLOR_GRAY2RGB)
 
-# Draw the vectors
-plt.quiver(
-	x_positions,			# X coordinate of start point
-	y_positions,			# Y coordinate of start point
-	dx_vals,				# X-direction movement from start point to end point
-	dy_vals,				# Y-direction movement from start point to end point
-	color='r',				# Vector colour (red)
-	scale_units="dots",		# Vector scaling unit (pixels)
-	scale=0.4,				# Vector scaling factor
-	headwidth=3,			# Vector head width as a multiple of shaft width
-	headlength=3,			# Vector head length as a multiple of shaft length
-	headaxislength=2.5)		# Vector head length at shaft intersection
+for i in range(cells_per_row_column):
+	for j in range(cells_per_row_column):
+		display_img = cv2.arrowedLine(display_img, vectors[i][j][0], vectors[i][j][1], color=color_set, thickness=1, tipLength=0.25)
 
-# Finalize and display the vector image
-plt.subplots_adjust(left=0,right=1,bottom=0,top=1)
-plt.show()
+cv2.imshow('Vectors', display_img)
+cv2.waitKey(10000)
+
+
+# # Define output image parameters
+# screen_dpi = 227
+# plt.figure(figsize=(len(img_vector)/screen_dpi,len(img_vector)/screen_dpi),dpi=screen_dpi)
+# plt.imshow(
+# 	display_img,			# Image name
+# 	alpha=1.0,				# Transparency setting
+# 	cmap="Greys_r",			# Grayscale colour map
+# 	origin="upper",			# Image origin in the top left corner
+# 	interpolation="none",	# Image blurring off
+# 	resample=False,			# Image resampling off
+# 	aspect="equal")			# Image distorting off
+
+# # Draw the vectors
+# plt.quiver(
+# 	x_positions,			# X coordinate of start point
+# 	y_positions,			# Y coordinate of start point
+# 	dx_vals,				# X-direction movement from start point to end point
+# 	dy_vals,				# Y-direction movement from start point to end point
+# 	color='r',				# Vector colour (red)
+# 	scale_units="dots",		# Vector scaling unit (pixels)
+# 	scale=0.4,				# Vector scaling factor
+# 	headwidth=3,			# Vector head width as a multiple of shaft width
+# 	headlength=3,			# Vector head length as a multiple of shaft length
+# 	headaxislength=2.5)		# Vector head length at shaft intersection
+
+# # Finalize and display the vector image
+# plt.subplots_adjust(left=0,right=1,bottom=0,top=1)
+# plt.show()
 # ---------- Generate and display gradient vectors ----------
 
 # ---------- Reverse the image padding ----------
