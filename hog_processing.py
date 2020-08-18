@@ -291,7 +291,7 @@ for i in range(cells_per_row_column):
 		y_shift = px_per_cell*i
 		for num in range(len(angles)):
 			if not (selected_orientation - angles[num]).any():
-				vectors[i][j] = ((angle_coords[num][0][0]+x_shift,angle_coords[num][0][1]+y_shift),(angle_coords[num][1][0]+x_shift,angle_coords[num][1][1]+y_shift))
+				vectors[i][j] = [[angle_coords[num][0][0]+x_shift,angle_coords[num][0][1]+y_shift],[angle_coords[num][1][0]+x_shift,angle_coords[num][1][1]+y_shift]]
 		
 		# No-gradient image cells are assigned zero-coordinates
 		if vectors[i][j] == 0:
@@ -317,6 +317,22 @@ x_positions = [vectors[i][j][0][0] for i in range(cells_per_row_column) for j in
 y_positions = [vectors[i][j][0][1] for i in range(cells_per_row_column) for j in range(cells_per_row_column)]
 dx_vals = [(vectors[i][j][1][0]-vectors[i][j][0][0])*avg_px_intensities_normalized[i][j] for i in range(cells_per_row_column) for j in range(cells_per_row_column)]
 dy_vals = [(vectors[i][j][0][1]-vectors[i][j][1][1])*avg_px_intensities_normalized[i][j] for i in range(cells_per_row_column) for j in range(cells_per_row_column)]
+
+# for i in range(len(x_positions)):
+# 	print(x_positions[i])
+# 	print(y_positions[i])
+# 	print(x_positions[i]+dx_vals[i])
+# 	print(y_positions[i]+dy_vals[i])
+# 	print("----------")
+
+# Recombine all vector data into one array for later use and convert data to tuple
+for i in range(cells_per_row_column):
+	for j in range(cells_per_row_column):
+		vectors[i][j][1][0] = vectors[i][j][0][0]+((vectors[i][j][1][0]-vectors[i][j][0][0])*avg_px_intensities_normalized[i][j])
+		vectors[i][j][1][1] = vectors[i][j][0][1]+((vectors[i][j][1][1]-vectors[i][j][0][1])*avg_px_intensities_normalized[i][j])
+		vectors[i][j][0] = tuple(vectors[i][j][0])
+		vectors[i][j][1] = tuple(vectors[i][j][1])
+		vectors[i][j] = tuple(vectors[i][j])
 
 # Duplicate the HOG image to enable returning both a vector output and a clean output
 img_vector = hog_image_rescaled
