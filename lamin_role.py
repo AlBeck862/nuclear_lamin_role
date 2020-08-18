@@ -17,6 +17,9 @@ import matplotlib.pyplot as plt
 import numpy as np 
 import cv2
 from PIL import Image
+from lamin_fxns import pad_img
+
+sys.exit(0)
 
 # Parameters for Lucas-Kanade optical flow
 lk_params = dict(winSize = (45,45), maxLevel = 30, criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))

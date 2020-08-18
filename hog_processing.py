@@ -18,91 +18,10 @@ import matplotlib.pyplot as plt
 import numpy as np 
 import cv2
 from PIL import Image
+from lamin_fxns import orientation_analysis,find_avg_px_intensity,pad_img
 
 # The terminal will not skip output lines.
 np.set_printoptions(threshold=sys.maxsize)
-
-# ---------- Major Angle Analysis ----------
-def orientation_analysis(dim,img_part,angs):
-	max_intensity = 0
-	major_intensities = []
-	
-	for ang in angs:
-		result = np.multiply(img_part,ang)
-		
-		angle_intensity = 0
-		
-		for p in range(dim):
-			for q in range(dim):
-				angle_intensity = angle_intensity + result[p][q]
-		if angle_intensity == max_intensity:
-			major_intensities.append(ang)
-		if angle_intensity > max_intensity:
-			major_intensities = [ang]
-			max_intensity = angle_intensity
-
-	return major_intensities
-# ---------- Major Angle Analysis ----------
-
-# ---------- Average Pixel Intensity of Image Cells ----------
-def find_avg_px_intensity(image,cells_row_column,pixels_per_cell):
-	avg_pixel_intensities = np.zeros((cells_row_column,cells_row_column))
-	
-	for i in range(cells_row_column):
-		for j in range(cells_row_column):
-			sum_pixel_intensity_cell = 0.0
-			for a in range(pixels_per_cell*i,(pixels_per_cell*i)+pixels_per_cell):
-				for b in range(pixels_per_cell*j,(pixels_per_cell*j)+pixels_per_cell):
-					sum_pixel_intensity_cell += image[a][b]
-			avg_pixel_intensity_cell = sum_pixel_intensity_cell/(pixels_per_cell**2)
-			avg_pixel_intensities[i][j] = avg_pixel_intensity_cell
-
-	return avg_pixel_intensities
-# ---------- Average Pixel Intensity of Image Cells ----------
-
-# ---------- Image Padding ----------
-def pad_img(image,pixels_per_cell):
-	# If lengths are equal, pad both equally
-	if len(image) == len(image[0]):
-		pad_row = 0
-		pad_column = 0
-		while len(image)%pixels_per_cell != 0:
-			image = np.pad(image,((0,1),(0,1),(0,0)))
-			pad_row += 1
-			pad_column += 1
-	
-	# If x is longer, pad x until %px_per_cell=0, then pad y until equal to x
-	elif len(image) > len(image[0]):
-		pad_row = 0
-		while len(image)%pixels_per_cell != 0:
-			image = np.pad(image,((0,1),(0,0),(0,0)))
-			pad_row += 1
-
-		pad_column = 0
-		while len(image[0]) != len(image):
-			image = np.pad(image,((0,0),(0,1),(0,0)))
-			pad_column += 1
-	
-	# If y is longer, pad y until %px_per_cell=0, then pad x until equal to y
-	elif len(image[0]) > len(image):
-		pad_column = 0
-		while len(image[0])%pixels_per_cell != 0:
-			image = np.pad(image,((0,0),(0,1),(0,0)))
-			pad_column += 1
-
-		pad_row = 0
-		while len(image[0]) != len(image):
-			image = np.pad(image,((0,1),(0,0),(0,0)))
-			pad_row += 1
-
-	# Failsafe
-	else:
-		print("Image size unrecognized.")
-		print("Fatal script error.")
-		sys.exit(0)
-
-	return image
-# ---------- Image Padding ----------
 
 # ---------- Possible Angles ----------
 first_angle = np.array([[0,0,0,0,0,0,0,0],
@@ -167,15 +86,7 @@ seventh_angle = np.array([[0,0,0,0,0,0,0,0],
 						[0,0,0,0,1,0,0,0],
 						[0,0,0,0,1,0,0,0],
 						[0,0,0,0,0,0,0,0]])
-
-# Define the angle for each possible gradient line
-# first_angle_val = 10
-# second_angle_val = 30
-# third_angle_val = 50
-# fourth_angle_val = 90
-# fifth_angle_val = 130
-# sixth_angle_val = 150
-# seventh_angle_val = 170
+# ---------- Possible Angles ----------
 
 # Define relative coordinates for each possible gradient line
 # All coordinates are based on a first-quadrant, bottom-left-corner origin
