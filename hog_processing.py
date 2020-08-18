@@ -60,6 +60,50 @@ def find_avg_px_intensity(image,cells_row_column,pixels_per_cell):
 	return avg_pixel_intensities
 # ---------- Average Pixel Intensity of Image Cells ----------
 
+# ---------- Image Padding ----------
+def pad_img(image,pixels_per_cell):
+	# If lengths are equal, pad both equally
+	if len(image) == len(image[0]):
+		pad_row = 0
+		pad_column = 0
+		while len(image)%pixels_per_cell != 0:
+			image = np.pad(image,((0,1),(0,1),(0,0)))
+			pad_row += 1
+			pad_column += 1
+	
+	# If x is longer, pad x until %px_per_cell=0, then pad y until equal to x
+	elif len(image) > len(image[0]):
+		pad_row = 0
+		while len(image)%pixels_per_cell != 0:
+			image = np.pad(image,((0,1),(0,0),(0,0)))
+			pad_row += 1
+
+		pad_column = 0
+		while len(image[0]) != len(image):
+			image = np.pad(image,((0,0),(0,1),(0,0)))
+			pad_column += 1
+	
+	# If y is longer, pad y until %px_per_cell=0, then pad x until equal to y
+	elif len(image[0]) > len(image):
+		pad_column = 0
+		while len(image[0])%pixels_per_cell != 0:
+			image = np.pad(image,((0,0),(0,1),(0,0)))
+			pad_column += 1
+
+		pad_row = 0
+		while len(image[0]) != len(image):
+			image = np.pad(image,((0,1),(0,0),(0,0)))
+			pad_row += 1
+
+	# Failsafe
+	else:
+		print("Image size unrecognized.")
+		print("Fatal script error.")
+		sys.exit(0)
+
+	return image
+# ---------- Image Padding ----------
+
 # ---------- Possible Angles ----------
 first_angle = np.array([[0,0,0,0,0,0,0,0],
 						[0,0,0,0,1,0,0,0],
@@ -176,46 +220,8 @@ px_per_cell = 8
 # Control for invalid image sizes
 if ((len(img)%px_per_cell != 0) and (len(img[0])%px_per_cell != 0)) or (len(img) != len(img[0])):
 	print("The image will now be padded for compatibility purposes.")
-
-	# If lengths are equal, pad both equally
-	if len(img) == len(img[0]):
-		pad_row = 0
-		pad_column = 0
-		while len(img)%px_per_cell != 0:
-			img = np.pad(img,((0,1),(0,1),(0,0)))
-			pad_row += 1
-			pad_column += 1
+	img = pad_img(img,px_per_cell)
 	
-	# If x is longer, pad x until %px_per_cell=0, then pad y until equal to x
-	elif len(img) > len(img[0]):
-		pad_row = 0
-		while len(img)%px_per_cell != 0:
-			img = np.pad(img,((0,1),(0,0),(0,0)))
-			pad_row += 1
-
-		pad_column = 0
-		while len(img[0]) != len(img):
-			img = np.pad(img,((0,0),(0,1),(0,0)))
-			pad_column += 1
-	
-	# If y is longer, pad y until %px_per_cell=0, then pad x until equal to y
-	elif len(img[0]) > len(img):
-		pad_column = 0
-		while len(img[0])%px_per_cell != 0:
-			img = np.pad(img,((0,0),(0,1),(0,0)))
-			pad_column += 1
-
-		pad_row = 0
-		while len(img[0]) != len(img):
-			img = np.pad(img,((0,1),(0,0),(0,0)))
-			pad_row += 1
-
-	# Failsafe
-	else:
-		print("Image size unrecognized.")
-		print("Fatal script error.")
-		sys.exit(0)
-
 	# Acknowledge padding of image
 	print("Padding success")
 
