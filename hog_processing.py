@@ -291,7 +291,7 @@ for i in range(cells_per_row_column):
 		y_shift = px_per_cell*i
 		for num in range(len(angles)):
 			if not (selected_orientation - angles[num]).any():
-				vectors[i][j] = ((angle_coords[num][0][0]+x_shift,angle_coords[num][0][1]+y_shift),(angle_coords[num][1][0]+x_shift,angle_coords[num][1][1]+y_shift))
+				vectors[i][j] = [[angle_coords[num][0][0]+x_shift,angle_coords[num][0][1]+y_shift],[angle_coords[num][1][0]+x_shift,angle_coords[num][1][1]+y_shift]]
 		
 		# No-gradient image cells are assigned zero-coordinates
 		if vectors[i][j] == 0:
@@ -312,16 +312,10 @@ max_intensity = np.max(avg_px_intensities)
 # Divide each element by the maximum value, normalizing all vector lengths (*3 for visualization purposes only)
 avg_px_intensities_normalized = 3*(avg_px_intensities/max_intensity)
 
-# Define the position and length of each vector (using list comprehensions)
-x_positions = [vectors[i][j][0][0] for i in range(cells_per_row_column) for j in range(cells_per_row_column)]
-y_positions = [vectors[i][j][0][1] for i in range(cells_per_row_column) for j in range(cells_per_row_column)]
-dx_vals = [(vectors[i][j][1][0]-vectors[i][j][0][0])*avg_px_intensities_normalized[i][j] for i in range(cells_per_row_column) for j in range(cells_per_row_column)]
-dy_vals = [(vectors[i][j][0][1]-vectors[i][j][1][1])*avg_px_intensities_normalized[i][j] for i in range(cells_per_row_column) for j in range(cells_per_row_column)]
-
 # Duplicate the HOG image to enable returning both a vector output and a clean output
 img_vector = hog_image_rescaled
 
-# Set the image on which vectors will be overlayed
+# Set the image on which vectors will be overlayed as well as the colour of the vectors to be displayed
 if sys.argv[3] == "hog":
 	display_img = img_vector
 	color_set = 255
@@ -332,44 +326,17 @@ else:
 	print("Invalid argument in third position.")
 	sys.exit(0)
 
-# display_img = cv2.cvtColor(display_img,cv2.COLOR_GRAY2RGB)
+for i in range(cells_per_row_column):
+	for j in range(cells_per_row_column):
+		vectors[i][j][1][0] = int(vectors[i][j][0][0]+((vectors[i][j][1][0]-vectors[i][j][0][0])*avg_px_intensities_normalized[i][j]))
+		vectors[i][j][1][1] = int(vectors[i][j][0][1]+((vectors[i][j][1][1]-vectors[i][j][0][1])*avg_px_intensities_normalized[i][j]))
 
 for i in range(cells_per_row_column):
 	for j in range(cells_per_row_column):
-		display_img = cv2.arrowedLine(display_img, vectors[i][j][0], vectors[i][j][1], color=color_set, thickness=1, tipLength=0.25)
+		display_img = cv2.arrowedLine(display_img, tuple(vectors[i][j][0]), tuple(vectors[i][j][1]), color=color_set, thickness=1, tipLength=0.25)
 
 cv2.imshow('Vectors', display_img)
-cv2.waitKey(10000)
-
-
-# # Define output image parameters
-# screen_dpi = 227
-# plt.figure(figsize=(len(img_vector)/screen_dpi,len(img_vector)/screen_dpi),dpi=screen_dpi)
-# plt.imshow(
-# 	display_img,			# Image name
-# 	alpha=1.0,				# Transparency setting
-# 	cmap="Greys_r",			# Grayscale colour map
-# 	origin="upper",			# Image origin in the top left corner
-# 	interpolation="none",	# Image blurring off
-# 	resample=False,			# Image resampling off
-# 	aspect="equal")			# Image distorting off
-
-# # Draw the vectors
-# plt.quiver(
-# 	x_positions,			# X coordinate of start point
-# 	y_positions,			# Y coordinate of start point
-# 	dx_vals,				# X-direction movement from start point to end point
-# 	dy_vals,				# Y-direction movement from start point to end point
-# 	color='r',				# Vector colour (red)
-# 	scale_units="dots",		# Vector scaling unit (pixels)
-# 	scale=0.4,				# Vector scaling factor
-# 	headwidth=3,			# Vector head width as a multiple of shaft width
-# 	headlength=3,			# Vector head length as a multiple of shaft length
-# 	headaxislength=2.5)		# Vector head length at shaft intersection
-
-# # Finalize and display the vector image
-# plt.subplots_adjust(left=0,right=1,bottom=0,top=1)
-# plt.show()
+cv2.waitKey(7500)
 # ---------- Generate and display gradient vectors ----------
 
 # ---------- Reverse the image padding ----------
