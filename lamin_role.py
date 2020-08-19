@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import numpy as np 
 import cv2
 from PIL import Image
-from lamin_fxns import pad_img
+from lamin_fxns import orientation_analysis,find_avg_px_intensity,pad_img,force_3d
 
 # The terminal will not skip output lines
 np.set_printoptions(threshold=sys.maxsize)
@@ -111,6 +111,9 @@ img_delay = int(sys.argv[2])
 # Variable for color to draw optical flow track - (B,G,R)
 color = (0, 0, 255)
 
+# Define number of pixels per HOG image cell dimension (square)
+px_per_cell = 8
+
 # ret = a boolean return value from getting the frame, first_frame = the first frame in the entire video sequence
 ret, first_frame = cap.read()
 
@@ -118,10 +121,59 @@ ret, first_frame = cap.read()
 cv2.imshow('Unaltered Frame',first_frame)
 cv2.waitKey(img_delay)
 
+# Force the frame to be RGB (three-dimensional)
+first_frame,multi_channel = force_3d(first_frame)
+
+# Display sliced image
+cv2.imshow('Sliced to RGB',img)
+cv2.waitKey(img_delay)
+
+# Adapts the process to the final image size
+cells_per_row_column = int(len(first_frame)/px_per_cell)
+
+# Control for invalid image sizes (padding)
+if ((len(first_frame)%px_per_cell != 0) and (len(first_frame[0])%px_per_cell != 0)) or (len(first_frame) != len(first_frame[0])):
+    print("The frame will now be padded for compatibility purposes.")
+    first_frame = pad_img(first_frame,px_per_cell)
+    
+    # Acknowledge padding of frame
+    print("Padding success")
+
+    # Display padded frame
+    cv2.imshow('Padded',first_frame)
+    cv2.waitKey(img_delay)
+
+else:
+    print("The frame is compatible with this script.")
+    print("Padding is not necessary.")
+
+# Failsafe double check
+if ((len(first_frame)%px_per_cell != 0) and (len(first_frame[0])%px_per_cell != 0)) or (len(first_frame) != len(first_frame[0])):
+    print("Double check: invalid frame size.")
+    print("Fatal script error.")
+    sys.exit(0)
+
 # Converts frame to grayscale because we only need the luminance channel for detecting edges - less computationally expensive
 prev_gray = cv2.cvtColor(first_frame, cv2.COLOR_BGR2GRAY)
 
-#PADDING WOULD GO HERE
+# Compute and store cell-specific average pixel intensities
+avg_px_intensities = find_avg_px_intensity(prev_gray,cells_per_row_column,px_per_cell)
+
+# Generate the HOG feature vector and image
+fd, hog_image = hog(img, orientations=9, pixels_per_cell=(px_per_cell, px_per_cell), 
+                    cells_per_block=(2, 2), visualize=True, multichannel=multi_channel, feature_vector=False)
+
+# Acknowledge HOG generation
+print("HOG generation success")
+
+# Rescale histogram for better display
+hog_image_rescaled = exposure.rescale_intensity(hog_image, in_range=(0,10))
+
+# Display the basic (unmodified) HOG image
+cv2.imshow('HOG Default', hog_image_rescaled)
+cv2.waitKey(img_delay)
+
+# ---------- UNMODIFIED BELOW THIS LINE ----------
 
 # Creates an image filled with zero intensities with the same dimensions as the frame - for later drawing purposes
 mask = np.zeros_like(first_frame)
@@ -138,10 +190,10 @@ while(cap.isOpened()):
     # ret = a boolean return value from getting the frame, frame = the current frame being projected in the video
     ret, frame = cap.read()
     
+    #PADDING WOULD GO HERE
+
     # Converts each frame to grayscale - we previously only converted the first frame to grayscale
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-    #PADDING WOULD GO HERE
 
     # Define coordinates where movement should be tracked - larger step size = more spaced out vectors
     step_size = 15

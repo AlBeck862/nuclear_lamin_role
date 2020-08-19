@@ -15,7 +15,7 @@ from skimage.feature import hog
 from skimage import exposure
 import sys
 import matplotlib.pyplot as plt
-import numpy as np 
+import numpy as np
 import cv2
 from PIL import Image
 from lamin_fxns import orientation_analysis,find_avg_px_intensity,pad_img,force_3d
@@ -86,7 +86,6 @@ seventh_angle = np.array([[0,0,0,0,0,0,0,0],
 						[0,0,0,0,1,0,0,0],
 						[0,0,0,0,1,0,0,0],
 						[0,0,0,0,0,0,0,0]])
-# ---------- Possible Angles ----------
 
 # Define relative coordinates for each possible gradient line
 # All coordinates are based on a first-quadrant, bottom-left-corner origin
