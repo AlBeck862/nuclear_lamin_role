@@ -1,7 +1,7 @@
 """
 * Python script to determine the role of lamin within cell nuclei.
 * usage: python3 lamin_role.py
-*				<filename>					# Name of image
+*				<.mp4 file name>			# Name of video
 *				<cv2 image linger in ms>	# Delay (milliseconds) between CV2 images
 *				<"hog" OR "input">			# Select "hog" for vectors to be overlayed on the HOG image, or "input" for vectors to be overlayed on the original image
 """
@@ -19,19 +19,104 @@ import cv2
 from PIL import Image
 from lamin_fxns import pad_img
 
-sys.exit(0)
+# The terminal will not skip output lines
+np.set_printoptions(threshold=sys.maxsize)
+
+# ---------- Possible Angles ----------
+first_angle = np.array([[0,0,0,0,0,0,0,0],
+                        [0,0,0,0,1,0,0,0],
+                        [0,0,0,0,1,0,0,0],
+                        [0,0,0,0,1,0,0,0],
+                        [0,0,0,1,0,0,0,0],
+                        [0,0,0,1,0,0,0,0],
+                        [0,0,0,1,0,0,0,0],
+                        [0,0,0,0,0,0,0,0]])
+
+second_angle = np.array([[0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,1,0,0],
+                        [0,0,0,0,1,0,0,0],
+                        [0,0,0,0,1,0,0,0],
+                        [0,0,0,1,0,0,0,0],
+                        [0,0,0,1,0,0,0,0],
+                        [0,0,1,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0]])
+
+third_angle = np.array([[0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,1,0],
+                        [0,0,0,0,1,1,0,0],
+                        [0,0,1,1,0,0,0,0],
+                        [0,1,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0]])
+
+fourth_angle = np.array([[0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0],
+                        [0,1,1,1,1,1,1,1],
+                        [0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0]])
+
+fifth_angle = np.array([[0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0],
+                        [0,1,0,0,0,0,0,0],
+                        [0,0,1,1,0,0,0,0],
+                        [0,0,0,0,1,1,0,0],
+                        [0,0,0,0,0,0,1,0],
+                        [0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0]])
+
+sixth_angle = np.array([[0,0,0,0,0,0,0,0],
+                        [0,0,1,0,0,0,0,0],
+                        [0,0,0,1,0,0,0,0],
+                        [0,0,0,1,0,0,0,0],
+                        [0,0,0,0,1,0,0,0],
+                        [0,0,0,0,1,0,0,0],
+                        [0,0,0,0,0,1,0,0],
+                        [0,0,0,0,0,0,0,0]])
+
+seventh_angle = np.array([[0,0,0,0,0,0,0,0],
+                        [0,0,0,1,0,0,0,0],
+                        [0,0,0,1,0,0,0,0],
+                        [0,0,0,1,0,0,0,0],
+                        [0,0,0,0,1,0,0,0],
+                        [0,0,0,0,1,0,0,0],
+                        [0,0,0,0,1,0,0,0],
+                        [0,0,0,0,0,0,0,0]])
+# ---------- Possible Angles ----------
+
+# Define relative coordinates for each possible gradient line
+# All coordinates are based on a first-quadrant, bottom-left-corner origin
+# All vectors run from left to right, given the (first,second) point format
+first_angle_coords = ((3,6),(4,1))
+second_angle_coords = ((2,6),(5,1))
+third_angle_coords = ((1,5),(6,2))
+fourth_angle_coords = ((1,4),(7,4))
+fifth_angle_coords = ((1,2),(6,5))
+sixth_angle_coords = ((2,1),(5,6))
+seventh_angle_coords = ((3,1),(4,6))
+angle_coords = (first_angle_coords,second_angle_coords,third_angle_coords,fourth_angle_coords,fifth_angle_coords,sixth_angle_coords,seventh_angle_coords)
 
 # Parameters for Lucas-Kanade optical flow
 lk_params = dict(winSize = (45,45), maxLevel = 30, criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
 
 # The video feed is read in as a VideoCapture object
-cap = cv2.VideoCapture("Cropped_wild_type_film_low_res.mp4")
+cap = cv2.VideoCapture(sys.argv[1])
+
+# Set global CV2 image delay
+img_delay = int(sys.argv[2])
 
 # Variable for color to draw optical flow track - (B,G,R)
 color = (0, 0, 255)
 
 # ret = a boolean return value from getting the frame, first_frame = the first frame in the entire video sequence
 ret, first_frame = cap.read()
+
+# Display the first frame
+cv2.imshow('Unaltered Frame',first_frame)
+cv2.waitKey(img_delay)
 
 # Converts frame to grayscale because we only need the luminance channel for detecting edges - less computationally expensive
 prev_gray = cv2.cvtColor(first_frame, cv2.COLOR_BGR2GRAY)

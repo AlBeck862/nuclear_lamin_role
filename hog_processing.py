@@ -18,9 +18,9 @@ import matplotlib.pyplot as plt
 import numpy as np 
 import cv2
 from PIL import Image
-from lamin_fxns import orientation_analysis,find_avg_px_intensity,pad_img
+from lamin_fxns import orientation_analysis,find_avg_px_intensity,pad_img,force_3d
 
-# The terminal will not skip output lines.
+# The terminal will not skip output lines
 np.set_printoptions(threshold=sys.maxsize)
 
 # ---------- Possible Angles ----------
@@ -108,20 +108,14 @@ img = imread(sys.argv[1])
 # Set global image delay
 img_delay = int(sys.argv[2])
 
+# Display the input image
 cv2.imshow('Original',img)
 cv2.waitKey(img_delay)
 
 # Force the image to be RGB (three-dimensional)
-try: 
-	img = img[:,:,0:3]
-	multi_channel = True
-except:
-	if img.ndim == 3:
-		print("Invalid number of channels.")
-		sys.exit(0)
-	else:
-		multi_channel = False
+img,multi_channel = force_3d(img)
 
+# Display sliced image
 cv2.imshow('Sliced to RGB',img)
 cv2.waitKey(img_delay)
 

@@ -100,3 +100,19 @@ def orientation_analysis(dim,img_part,angs):
 			max_intensity = angle_intensity
 
 	return major_intensities
+
+def force_3d(image):
+	"""
+	# Ensure that the image is three-dimensional and set the HOG multichannel parameter accordingly.
+	"""
+	try: 
+		image = image[:,:,0:3]
+		hog_channel_setting = True
+	except:
+		if image.ndim == 3:
+			print("Invalid number of channels.")
+			sys.exit(0)
+		else:
+			hog_channel_setting = False
+
+	return image,hog_channel_setting
