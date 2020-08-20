@@ -117,34 +117,41 @@ px_per_cell = 8
 # ret = a boolean return value from getting the frame, first_frame = the first frame in the entire video sequence
 ret, first_frame = cap.read()
 
+# Announce the frame currently being processed
+print("***NOTICE***")
+print("Now processing frame #1")
+
 # Display the first frame
-cv2.imshow('Unaltered Frame',first_frame)
+cv2.imshow('Unaltered Frame: frame 1',first_frame)
 cv2.waitKey(img_delay)
 
 # Force the frame to be RGB (three-dimensional)
 first_frame,multi_channel = force_3d(first_frame)
 
 # Display sliced image
-cv2.imshow('Sliced to RGB',img)
+cv2.imshow('Sliced to RGB: frame 1',first_frame)
 cv2.waitKey(img_delay)
 
 # Adapts the process to the final image size
 cells_per_row_column = int(len(first_frame)/px_per_cell)
 
+print(len(first_frame))
+print(len(first_frame[0]))
+
 # Control for invalid image sizes (padding)
 if ((len(first_frame)%px_per_cell != 0) and (len(first_frame[0])%px_per_cell != 0)) or (len(first_frame) != len(first_frame[0])):
-    print("The frame will now be padded for compatibility purposes.")
+    print("Frame 1 will now be padded for compatibility purposes.")
     first_frame = pad_img(first_frame,px_per_cell)
     
     # Acknowledge padding of frame
     print("Padding success")
 
     # Display padded frame
-    cv2.imshow('Padded',first_frame)
+    cv2.imshow('Padded: frame 1',first_frame)
     cv2.waitKey(img_delay)
 
 else:
-    print("The frame is compatible with this script.")
+    print("Frame 1 is compatible with this script.")
     print("Padding is not necessary.")
 
 # Failsafe double check
@@ -153,6 +160,9 @@ if ((len(first_frame)%px_per_cell != 0) and (len(first_frame[0])%px_per_cell != 
     print("Fatal script error.")
     sys.exit(0)
 
+print(len(first_frame))
+print(len(first_frame[0]))
+
 # Converts frame to grayscale because we only need the luminance channel for detecting edges - less computationally expensive
 prev_gray = cv2.cvtColor(first_frame, cv2.COLOR_BGR2GRAY)
 
@@ -160,20 +170,18 @@ prev_gray = cv2.cvtColor(first_frame, cv2.COLOR_BGR2GRAY)
 avg_px_intensities = find_avg_px_intensity(prev_gray,cells_per_row_column,px_per_cell)
 
 # Generate the HOG feature vector and image
-fd, hog_image = hog(img, orientations=9, pixels_per_cell=(px_per_cell, px_per_cell), 
+fd, hog_image = hog(first_frame, orientations=9, pixels_per_cell=(px_per_cell, px_per_cell), 
                     cells_per_block=(2, 2), visualize=True, multichannel=multi_channel, feature_vector=False)
 
 # Acknowledge HOG generation
-print("HOG generation success")
+print("HOG generation success: frame 1")
 
 # Rescale histogram for better display
 hog_image_rescaled = exposure.rescale_intensity(hog_image, in_range=(0,10))
 
 # Display the basic (unmodified) HOG image
-cv2.imshow('HOG Default', hog_image_rescaled)
+cv2.imshow(f'HOG Default: frame 1', hog_image_rescaled)
 cv2.waitKey(img_delay)
-
-# ---------- UNMODIFIED BELOW THIS LINE ----------
 
 # Creates an image filled with zero intensities with the same dimensions as the frame - for later drawing purposes
 mask = np.zeros_like(first_frame)
@@ -183,17 +191,82 @@ width = 454
 height = 540
 
 # Creates a video file for saving output at 20 fps (can change at will)
-video = cv2.VideoWriter("Wild_type_result.mov",cv2.VideoWriter_fourcc(*'avc1'),20,(width,height))
+video = cv2.VideoWriter("result.mov",cv2.VideoWriter_fourcc(*'avc1'),20,(width,height))
 video.write(first_frame)
 
+counter = 2
 while(cap.isOpened()):
     # ret = a boolean return value from getting the frame, frame = the current frame being projected in the video
     ret, frame = cap.read()
     
-    #PADDING WOULD GO HERE
+    # Announce the frame currently being processed
+    print("***NOTICE***")
+    print(f"Now processing frame #{counter}")
 
+    # Display the frame
+    cv2.imshow(f'Unaltered Frame: frame {counter}',frame)
+    cv2.waitKey(img_delay)
+
+    # Force the frame to be RGB (three-dimensional)
+    frame,multi_channel = force_3d(first_frame)
+
+    # Display sliced image
+    cv2.imshow(f'Sliced to RGB: frame {counter}',frame)
+    cv2.waitKey(img_delay)
+
+    # Adapts the process to the final image size
+    cells_per_row_column = int(len(frame)/px_per_cell)
+
+    print(len(frame))
+    print(len(frame[0]))
+
+    # Control for invalid image sizes (padding)
+    if ((len(frame)%px_per_cell != 0) and (len(frame[0])%px_per_cell != 0)) or (len(frame) != len(frame[0])):
+        print(f"Frame {counter} will now be padded for compatibility purposes.")
+        frame = pad_img(frame,px_per_cell)
+        
+        # Acknowledge padding of frame
+        print(f"Padding success: frame {counter}")
+
+        # Display padded frame
+        cv2.imshow(f'Padded: frame {counter}',frame)
+        cv2.waitKey(img_delay)
+
+    else:
+        print(f"Frame {counter} is compatible with this script.")
+        print("Padding is not necessary.")
+
+    # Failsafe double check
+    if ((len(frame)%px_per_cell != 0) and (len(frame[0])%px_per_cell != 0)) or (len(frame) != len(frame[0])):
+        print("Double check: invalid frame size.")
+        print("Fatal script error.")
+        sys.exit(0)
+
+    print(len(first_frame))
+    print(len(first_frame[0]))
+    
     # Converts each frame to grayscale - we previously only converted the first frame to grayscale
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+    # Compute and store cell-specific average pixel intensities
+    avg_px_intensities = find_avg_px_intensity(gray,cells_per_row_column,px_per_cell)
+
+    # Generate the HOG feature vector and image
+    fd, hog_image = hog(frame, orientations=9, pixels_per_cell=(px_per_cell, px_per_cell), 
+                        cells_per_block=(2, 2), visualize=True, multichannel=multi_channel, feature_vector=False)
+
+    # Acknowledge HOG generation
+    print(f"HOG generation success: frame {counter}")
+
+    # Rescale histogram for better display
+    hog_image_rescaled = exposure.rescale_intensity(hog_image, in_range=(0,10))
+
+    # Display the basic (unmodified) HOG image
+    cv2.imshow(f'HOG Default: frame {counter}', hog_image_rescaled)
+    cv2.waitKey(img_delay)
+
+    sys.exit(0)
+    # ---------- UP TO HERE ----------
 
     # Define coordinates where movement should be tracked - larger step size = more spaced out vectors
     step_size = 15
@@ -241,6 +314,9 @@ while(cap.isOpened()):
     # The program breaks out of the while loop when the user presses the 'q' key
     if cv2.waitKey(100) & 0xFF == ord('q'):
         break
+
+    # Increase frame counter by one
+    counter += 1
 
 # The following frees up resources and closes all windows
 cap.release()
