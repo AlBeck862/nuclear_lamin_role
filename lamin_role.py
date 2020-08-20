@@ -183,6 +183,61 @@ hog_image_rescaled = exposure.rescale_intensity(hog_image, in_range=(0,10))
 cv2.imshow(f'HOG Default: frame 1', hog_image_rescaled)
 cv2.waitKey(img_delay)
 
+# ---------- Image cell manipulation ----------
+# Create the vector data array: one pair of coordinates for each gradient line
+vectors = np.zeros((cells_per_row_column,cells_per_row_column),dtype=object)
+
+# Segments the image into 8x8px cells which can be manipulated as units
+# i controls the rows, j controls the columns
+for i in range(cells_per_row_column):
+    for j in range(cells_per_row_column):
+        img_section = np.zeros((px_per_cell,px_per_cell))
+        n = 0
+        for a in range(px_per_cell*i,(px_per_cell*i)+px_per_cell):
+            m = 0
+            for b in range(px_per_cell*j,(px_per_cell*j)+px_per_cell):
+                img_section[n][m] = hog_image_rescaled[a][b]
+                m += 1
+            n += 1
+
+        # Call a custom function on every mini-image, checking which orientation is dominant
+        angles = (first_angle, second_angle, third_angle, fourth_angle, fifth_angle, sixth_angle, seventh_angle)
+        orientation_result = orientation_analysis(px_per_cell,img_section,angles)
+        selected_orientation = orientation_result[0]
+
+        # Modify output images given orientation data
+        g = 0
+        for a in range(px_per_cell*i,(px_per_cell*i)+px_per_cell):
+            h = 0
+            for b in range(px_per_cell*j,(px_per_cell*j)+px_per_cell):
+                if selected_orientation[g][h] == 0:
+                    hog_image_rescaled[a][b] = 0
+                h += 1
+            g += 1
+        
+        # Create vector data for the given image cell
+        x_shift = px_per_cell*j
+        y_shift = px_per_cell*i
+        for num in range(len(angles)):
+            if not (selected_orientation - angles[num]).any():
+                vectors[i][j] = [[angle_coords[num][0][0]+x_shift,angle_coords[num][0][1]+y_shift],[angle_coords[num][1][0]+x_shift,angle_coords[num][1][1]+y_shift]]
+        
+        # No-gradient image cells are assigned zero-coordinates
+        if vectors[i][j] == 0:
+            vectors[i][j] = ((0,0),(0,0))
+
+        # Safeguard against no-gradient image cells
+        if vectors[i][j] == ((0,0),(0,0)):
+            print("Warning: empty image cell detected.")
+
+# Acknowledge gradient selection
+print("Gradient selection success: frame 1")
+
+# Display the grayscale selected-gradients image
+cv2.imshow('Selected Gradients: frame 1',hog_image_rescaled)
+cv2.waitKey(img_delay)
+# ---------- Image cell manipulation ----------
+
 # Creates an image filled with zero intensities with the same dimensions as the frame - for later drawing purposes
 mask = np.zeros_like(first_frame)
 
@@ -265,6 +320,61 @@ while(cap.isOpened()):
     cv2.imshow(f'HOG Default: frame {counter}', hog_image_rescaled)
     cv2.waitKey(img_delay)
 
+    # ---------- Image cell manipulation ----------
+    # Create the vector data array: one pair of coordinates for each gradient line
+    vectors = np.zeros((cells_per_row_column,cells_per_row_column),dtype=object)
+
+    # Segments the image into 8x8px cells which can be manipulated as units
+    # i controls the rows, j controls the columns
+    for i in range(cells_per_row_column):
+        for j in range(cells_per_row_column):
+            img_section = np.zeros((px_per_cell,px_per_cell))
+            n = 0
+            for a in range(px_per_cell*i,(px_per_cell*i)+px_per_cell):
+                m = 0
+                for b in range(px_per_cell*j,(px_per_cell*j)+px_per_cell):
+                    img_section[n][m] = hog_image_rescaled[a][b]
+                    m += 1
+                n += 1
+
+            # Call a custom function on every mini-image, checking which orientation is dominant
+            angles = (first_angle, second_angle, third_angle, fourth_angle, fifth_angle, sixth_angle, seventh_angle)
+            orientation_result = orientation_analysis(px_per_cell,img_section,angles)
+            selected_orientation = orientation_result[0]
+
+            # Modify output images given orientation data
+            g = 0
+            for a in range(px_per_cell*i,(px_per_cell*i)+px_per_cell):
+                h = 0
+                for b in range(px_per_cell*j,(px_per_cell*j)+px_per_cell):
+                    if selected_orientation[g][h] == 0:
+                        hog_image_rescaled[a][b] = 0
+                    h += 1
+                g += 1
+            
+            # Create vector data for the given image cell
+            x_shift = px_per_cell*j
+            y_shift = px_per_cell*i
+            for num in range(len(angles)):
+                if not (selected_orientation - angles[num]).any():
+                    vectors[i][j] = [[angle_coords[num][0][0]+x_shift,angle_coords[num][0][1]+y_shift],[angle_coords[num][1][0]+x_shift,angle_coords[num][1][1]+y_shift]]
+            
+            # No-gradient image cells are assigned zero-coordinates
+            if vectors[i][j] == 0:
+                vectors[i][j] = ((0,0),(0,0))
+
+            # Safeguard against no-gradient image cells
+            if vectors[i][j] == ((0,0),(0,0)):
+                print("Warning: empty image cell detected.")
+
+    # Acknowledge gradient selection
+    print(f"Gradient selection success: frame {counter}")
+
+    # Display the grayscale selected-gradients image
+    cv2.imshow(f'Selected Gradients: frame {counter}',hog_image_rescaled)
+    cv2.waitKey(img_delay)
+    # ---------- Image cell manipulation ----------
+    
     # sys.exit(0)
     # ---------- UP TO HERE ----------
 
