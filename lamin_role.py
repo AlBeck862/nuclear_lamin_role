@@ -238,6 +238,70 @@ cv2.imshow('Selected Gradients: frame 1',hog_image_rescaled)
 cv2.waitKey(img_delay)
 # ---------- Image cell manipulation ----------
 
+# ---------- Generate and display gradient vectors ----------
+# Get the largest average intensity in the original image
+max_intensity = np.max(avg_px_intensities)
+
+# Divide each element by the maximum value, normalizing all vector lengths (*3 for visualization purposes only)
+avg_px_intensities_normalized = 3*(avg_px_intensities/max_intensity)
+
+# Define the position and length of each vector (using list comprehensions)
+x_positions = [vectors[i][j][0][0] for i in range(cells_per_row_column) for j in range(cells_per_row_column)]
+y_positions = [vectors[i][j][0][1] for i in range(cells_per_row_column) for j in range(cells_per_row_column)]
+dx_vals = [(vectors[i][j][1][0]-vectors[i][j][0][0])*avg_px_intensities_normalized[i][j] for i in range(cells_per_row_column) for j in range(cells_per_row_column)]
+dy_vals = [(vectors[i][j][0][1]-vectors[i][j][1][1])*avg_px_intensities_normalized[i][j] for i in range(cells_per_row_column) for j in range(cells_per_row_column)]
+
+# Recombine all vector data into one array for later use and convert data to tuple
+for i in range(cells_per_row_column):
+    for j in range(cells_per_row_column):
+        vectors[i][j][1][0] = vectors[i][j][0][0]+((vectors[i][j][1][0]-vectors[i][j][0][0])*avg_px_intensities_normalized[i][j])
+        vectors[i][j][1][1] = vectors[i][j][0][1]+((vectors[i][j][1][1]-vectors[i][j][0][1])*avg_px_intensities_normalized[i][j])
+        vectors[i][j][0] = tuple(vectors[i][j][0])
+        vectors[i][j][1] = tuple(vectors[i][j][1])
+        vectors[i][j] = tuple(vectors[i][j])
+
+# Duplicate the HOG image to enable returning both a vector output and a clean output
+img_vector = hog_image_rescaled
+
+# Set the image on which vectors will be overlayed
+if sys.argv[3] == "hog":
+    display_img = img_vector
+elif sys.argv[3] == "input":
+    display_img = img
+else:
+    print("Invalid argument in third position.")
+    sys.exit(0)
+
+# Define output image parameters
+screen_dpi = 227
+plt.figure(figsize=(len(img_vector)/screen_dpi,len(img_vector)/screen_dpi),dpi=screen_dpi)
+plt.imshow(
+    display_img,            # Image name
+    alpha=1.0,              # Transparency setting
+    cmap="Greys_r",         # Grayscale colour map
+    origin="upper",         # Image origin in the top left corner
+    interpolation="none",   # Image blurring off
+    resample=False,         # Image resampling off
+    aspect="equal")         # Image distorting off
+
+# Draw the vectors
+plt.quiver(
+    x_positions,            # X coordinate of start point
+    y_positions,            # Y coordinate of start point
+    dx_vals,                # X-direction movement from start point to end point
+    dy_vals,                # Y-direction movement from start point to end point
+    color='r',              # Vector colour (red)
+    scale_units="dots",     # Vector scaling unit (pixels)
+    scale=0.4,              # Vector scaling factor
+    headwidth=3,            # Vector head width as a multiple of shaft width
+    headlength=3,           # Vector head length as a multiple of shaft length
+    headaxislength=2.5)     # Vector head length at shaft intersection
+
+# Finalize and display the vector image
+plt.subplots_adjust(left=0,right=1,bottom=0,top=1)
+plt.show()
+# ---------- Generate and display gradient vectors ----------
+
 # Creates an image filled with zero intensities with the same dimensions as the frame - for later drawing purposes
 mask = np.zeros_like(first_frame)
 
@@ -254,6 +318,10 @@ while(cap.isOpened()):
     # ret = a boolean return value from getting the frame, frame = the current frame being projected in the video
     ret, frame = cap.read()
     
+    # Break out of the loop if there are no more frames to read
+    if ret == False:
+        break
+
     # Announce the frame currently being processed
     print("***NOTICE***")
     print(f"Now processing frame #{counter}")
@@ -263,7 +331,7 @@ while(cap.isOpened()):
     cv2.waitKey(img_delay)
 
     # Force the frame to be RGB (three-dimensional)
-    frame,multi_channel = force_3d(first_frame)
+    frame,multi_channel = force_3d(frame)
 
     # Display sliced image
     cv2.imshow(f'Sliced to RGB: frame {counter}',frame)
@@ -374,37 +442,95 @@ while(cap.isOpened()):
     cv2.imshow(f'Selected Gradients: frame {counter}',hog_image_rescaled)
     cv2.waitKey(img_delay)
     # ---------- Image cell manipulation ----------
-    
-    # sys.exit(0)
-    # ---------- UP TO HERE ----------
+
+    # ---------- Generate and display gradient vectors ----------
+    # Get the largest average intensity in the original image
+    max_intensity = np.max(avg_px_intensities)
+
+    # Divide each element by the maximum value, normalizing all vector lengths (*3 for visualization purposes only)
+    avg_px_intensities_normalized = 3*(avg_px_intensities/max_intensity)
+
+    # Define the position and length of each vector (using list comprehensions)
+    x_positions = [vectors[i][j][0][0] for i in range(cells_per_row_column) for j in range(cells_per_row_column)]
+    y_positions = [vectors[i][j][0][1] for i in range(cells_per_row_column) for j in range(cells_per_row_column)]
+    dx_vals = [(vectors[i][j][1][0]-vectors[i][j][0][0])*avg_px_intensities_normalized[i][j] for i in range(cells_per_row_column) for j in range(cells_per_row_column)]
+    dy_vals = [(vectors[i][j][0][1]-vectors[i][j][1][1])*avg_px_intensities_normalized[i][j] for i in range(cells_per_row_column) for j in range(cells_per_row_column)]
+
+    # Recombine all vector data into one array for later use and convert data to tuple
+    for i in range(cells_per_row_column):
+        for j in range(cells_per_row_column):
+            vectors[i][j][1][0] = vectors[i][j][0][0]+((vectors[i][j][1][0]-vectors[i][j][0][0])*avg_px_intensities_normalized[i][j])
+            vectors[i][j][1][1] = vectors[i][j][0][1]+((vectors[i][j][1][1]-vectors[i][j][0][1])*avg_px_intensities_normalized[i][j])
+            vectors[i][j][0] = tuple(vectors[i][j][0])
+            vectors[i][j][1] = tuple(vectors[i][j][1])
+            vectors[i][j] = tuple(vectors[i][j])
+
+    # Duplicate the HOG image to enable returning both a vector output and a clean output
+    img_vector = hog_image_rescaled
+
+    # Set the image on which vectors will be overlayed
+    if sys.argv[3] == "hog":
+        display_img = img_vector
+    elif sys.argv[3] == "input":
+        display_img = img
+    else:
+        print("Invalid argument in third position.")
+        sys.exit(0)
+
+    # Define output image parameters
+    screen_dpi = 227
+    plt.figure(figsize=(len(img_vector)/screen_dpi,len(img_vector)/screen_dpi),dpi=screen_dpi)
+    plt.imshow(
+        display_img,            # Image name
+        alpha=1.0,              # Transparency setting
+        cmap="Greys_r",         # Grayscale colour map
+        origin="upper",         # Image origin in the top left corner
+        interpolation="none",   # Image blurring off
+        resample=False,         # Image resampling off
+        aspect="equal")         # Image distorting off
+
+    # Draw the vectors
+    plt.quiver(
+        x_positions,            # X coordinate of start point
+        y_positions,            # Y coordinate of start point
+        dx_vals,                # X-direction movement from start point to end point
+        dy_vals,                # Y-direction movement from start point to end point
+        color='r',              # Vector colour (red)
+        scale_units="dots",     # Vector scaling unit (pixels)
+        scale=0.4,              # Vector scaling factor
+        headwidth=3,            # Vector head width as a multiple of shaft width
+        headlength=3,           # Vector head length as a multiple of shaft length
+        headaxislength=2.5)     # Vector head length at shaft intersection
+
+    # Finalize and display the vector image
+    plt.subplots_adjust(left=0,right=1,bottom=0,top=1)
+    plt.show()
+    # ---------- Generate and display gradient vectors ----------
 
     # Define coordinates where movement should be tracked - larger step size = more spaced out vectors
     step_size = 15
     coords = np.array([[x,y] for x in range(0,width,step_size) for y in range(0,height,step_size)],np.float32)
     
-    # Calculates sparse optical flow by Lucas-Kanade method
+    # Calculation of sparse optical flow by Lucas-Kanade method
     # https://docs.opencv.org/3.0-beta/modules/video/doc/motion_analysis_and_object_tracking.html#calcopticalflowpyrlk
-    next, status, error = cv2.calcOpticalFlowPyrLK(prev_gray, gray, coords, None, **lk_params)
+    next_pts, status, error = cv2.calcOpticalFlowPyrLK(prev_gray, gray, coords, None, **lk_params)
     
     # Selects good feature points for previous position
     coords = coords.reshape(-1,1,2)
     good_old = coords[status == 1]
     
     # Selects good feature points for next position
-    next = next.reshape(-1,1,2)
-    good_new = next[status == 1]
+    next_pts = next_pts.reshape(-1,1,2)
+    good_new = next_pts[status == 1]
     
     # Draws the optical flow tracks
     for i, (new, old) in enumerate(zip(good_new, good_old)):
         # Returns a contiguous flattened array as (x, y) coordinates for new point
         a, b = new.ravel()
-        print((a,b))#print start point
         # Returns a contiguous flattened array as (x, y) coordinates for old point
         c, d = old.ravel()
-        print((c,d))#print end point
         # Draws vector between new and old position
         mask = cv2.arrowedLine(mask, (c,d), (a,b), color, 1, tipLength = 0.2)
-        print("----------")#print separation between point sets
     # Overlays the optical flow tracks on the original frame
     output = cv2.add(frame,mask)
     
@@ -416,7 +542,7 @@ while(cap.isOpened()):
     
     # Displays the frame overlaid with displacement vectors
     cv2.imshow(f"Sparse Optical Flow: frames {counter-1} to {counter}",output)
-    cv2.waitKey(10000)
+    cv2.waitKey(img_delay)
     
     # Saves output frames to video
     video.write(output)
@@ -424,9 +550,6 @@ while(cap.isOpened()):
     # Frames are read by intervals of 100 milliseconds (can change at will depending on video frame rate) 
     # The program breaks out of the while loop when the user presses the 'q' key
     if cv2.waitKey(100) & 0xFF == ord('q'):
-        break
-
-    if counter >= 2:
         break
 
     # Increase frame counter by one
