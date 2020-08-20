@@ -187,8 +187,8 @@ cv2.waitKey(img_delay)
 mask = np.zeros_like(first_frame)
 
 # Frame dimensions
-width = 454
-height = 540
+width = len(first_frame)
+height = len(first_frame[0])
 
 # Creates a video file for saving output at 20 fps (can change at will)
 video = cv2.VideoWriter("result.mov",cv2.VideoWriter_fourcc(*'avc1'),20,(width,height))
@@ -265,7 +265,7 @@ while(cap.isOpened()):
     cv2.imshow(f'HOG Default: frame {counter}', hog_image_rescaled)
     cv2.waitKey(img_delay)
 
-    sys.exit(0)
+    # sys.exit(0)
     # ---------- UP TO HERE ----------
 
     # Define coordinates where movement should be tracked - larger step size = more spaced out vectors
@@ -288,13 +288,13 @@ while(cap.isOpened()):
     for i, (new, old) in enumerate(zip(good_new, good_old)):
         # Returns a contiguous flattened array as (x, y) coordinates for new point
         a, b = new.ravel()
-        
+        print((a,b))#print start point
         # Returns a contiguous flattened array as (x, y) coordinates for old point
         c, d = old.ravel()
-        
+        print((c,d))#print end point
         # Draws vector between new and old position
         mask = cv2.arrowedLine(mask, (c,d), (a,b), color, 1, tipLength = 0.2)
-    
+        print("----------")#print separation between point sets
     # Overlays the optical flow tracks on the original frame
     output = cv2.add(frame,mask)
     
@@ -304,8 +304,9 @@ while(cap.isOpened()):
     # Updates previous good feature points
     coords = good_new.reshape(-1, 1, 2)
     
-    # Opens a new window and displays the output frame
-    cv2.imshow("Sparse Optical Flow",output)
+    # Displays the frame overlaid with displacement vectors
+    cv2.imshow(f"Sparse Optical Flow: frames {counter-1} to {counter}",output)
+    cv2.waitKey(10000)
     
     # Saves output frames to video
     video.write(output)
@@ -313,6 +314,9 @@ while(cap.isOpened()):
     # Frames are read by intervals of 100 milliseconds (can change at will depending on video frame rate) 
     # The program breaks out of the while loop when the user presses the 'q' key
     if cv2.waitKey(100) & 0xFF == ord('q'):
+        break
+
+    if counter >= 2:
         break
 
     # Increase frame counter by one
