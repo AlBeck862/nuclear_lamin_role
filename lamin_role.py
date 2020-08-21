@@ -508,7 +508,7 @@ while(cap.isOpened()):
     # ---------- Generate and display gradient vectors ----------
 
     # Define coordinates where movement should be tracked - larger step size = more spaced out vectors
-    step_size = 15
+    step_size = px_per_cell
     coords = np.array([[x,y] for x in range(0,width,step_size) for y in range(0,height,step_size)],np.float32)
     
     # Calculation of sparse optical flow by Lucas-Kanade method
@@ -522,15 +522,19 @@ while(cap.isOpened()):
     # Selects good feature points for next position
     next_pts = next_pts.reshape(-1,1,2)
     good_new = next_pts[status == 1]
-    
+
     # Draws the optical flow tracks
-    for i, (new, old) in enumerate(zip(good_new, good_old)):
+    disp_vectors = np.zeros(len(coords),dtype=object)
+    for i, (new, old) in enumerate(zip(next_pts, coords)):
         # Returns a contiguous flattened array as (x, y) coordinates for new point
         a, b = new.ravel()
         # Returns a contiguous flattened array as (x, y) coordinates for old point
         c, d = old.ravel()
         # Draws vector between new and old position
         mask = cv2.arrowedLine(mask, (c,d), (a,b), color, 1, tipLength = 0.2)
+        
+        disp_vectors[i] = ((c,d),(a,b))
+
     # Overlays the optical flow tracks on the original frame
     output = cv2.add(frame,mask)
     
@@ -542,11 +546,13 @@ while(cap.isOpened()):
     
     # Displays the frame overlaid with displacement vectors
     cv2.imshow(f"Sparse Optical Flow: frames {counter-1} to {counter}",output)
-    cv2.waitKey(img_delay)
+    cv2.waitKey(7500)
     
     # Saves output frames to video
     video.write(output)
     
+    # --> COMPUTE THE DOT PRODUCT BETWEEN THE TWO VECTOR SETS
+
     # Frames are read by intervals of 100 milliseconds (can change at will depending on video frame rate) 
     # The program breaks out of the while loop when the user presses the 'q' key
     if cv2.waitKey(100) & 0xFF == ord('q'):
