@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import numpy as np 
 import cv2
 from PIL import Image
-from lamin_fxns import orientation_analysis,find_avg_px_intensity,pad_img,force_3d
+from lamin_fxns import orientation_analysis,find_avg_px_intensity,pad_img,force_3d,dot_product
 
 # The terminal will not skip output lines
 np.set_printoptions(threshold=sys.maxsize)
@@ -538,13 +538,35 @@ while(cap.isOpened()):
     # Overlays the optical flow tracks on the original frame
     output = cv2.add(frame,mask)
     
-    # ---------- Computation of dot product ----------
     # Flatten the lamin-density array to line up the data with the displacement vector array
     vectors = vectors.flatten()
 
-    # WRITE CUSTOM DOT PRODUCT FUNCTION? NP ONE DOESN'T REALLY HELP HERE.
+    # Compute the dot product, returned as an array of length len(vectors)
+    dot_prod_result = dot_product(vectors,disp_vectors)
 
-    # ---------- Computation of dot product ----------
+    # DOT PRODUCT FAILS FOR WILD TYPE: VECTORS ARE NOT THE SAME LENGTH
+    # CAUSE UNKNOWN
+
+    # Reconfigure the dot product results for accurate display
+    display_dot_result = np.zeros((len(hog_image_rescaled),len(hog_image_rescaled)))
+    dot_prod_result = dot_prod_result.reshape((cells_per_row_column,cells_per_row_column))
+
+    for i in range(cells_per_row_column):
+        for j in range(cells_per_row_column):
+            for a in range(px_per_cell*i,(px_per_cell*i)+px_per_cell):
+                for b in range(px_per_cell*j,(px_per_cell*j)+px_per_cell):
+                    display_dot_result[a][b] = dot_prod_result[i][j]
+
+    # Define heatmap parameters
+    screen_dpi = 227
+    plt.figure(figsize=(len(img_vector)/screen_dpi,len(img_vector)/screen_dpi),dpi=screen_dpi)
+    plt.imshow(display_dot_result, cmap="hot")
+
+    # Display the heatmap according to the dot product results
+    plt.subplots_adjust(left=0,right=1,bottom=0,top=1)
+    plt.show()
+
+    # NEXT: ADD COLOUR BAR FOR SCALE + REFINE AND CONFIRM OUTPUT ACCURACY
 
     # Updates previous frame
     prev_gray = gray.copy()
@@ -561,7 +583,7 @@ while(cap.isOpened()):
     screen_dpi = 227
     plt.figure(figsize=(len(img_vector)/screen_dpi,len(img_vector)/screen_dpi),dpi=screen_dpi)
     plt.imshow(
-        output,            # Image name
+        output,                 # Image name
         alpha=1.0,              # Transparency setting
         cmap="Greys_r",         # Grayscale colour map
         origin="upper",         # Image origin in the top left corner
@@ -575,7 +597,7 @@ while(cap.isOpened()):
         y_positions,            # Y coordinate of start point
         dx_vals,                # X-direction movement from start point to end point
         dy_vals,                # Y-direction movement from start point to end point
-        color='r',              # Vector colour (blue)
+        color='r',              # Vector colour (red)
         scale_units="dots",     # Vector scaling unit (pixels)
         scale=0.4,              # Vector scaling factor
         headwidth=3,            # Vector head width as a multiple of shaft width

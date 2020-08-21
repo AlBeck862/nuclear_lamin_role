@@ -16,6 +16,26 @@ import numpy as np
 import cv2
 from PIL import Image
 
+def dot_product(vectors_a, vectors_b):
+	"""
+	# Compute the dot product between two vector sets.
+	# The vectors must be stored in ((a,b),((c,d))) format, within a flat array.
+	"""
+	if len(vectors_a) != len(vectors_b):
+		raise IndexError("Vector arrays must be the same length.")
+
+	dot_result = np.zeros(len(vectors_a))
+	for i in range(len(vectors_a)):
+		# Get the x-direction and y-direction lengths for each vector.
+		vec_a_x = abs(vectors_a[i][1][0] - vectors_a[i][0][0])
+		vec_a_y = abs(vectors_a[i][1][1] - vectors_a[i][0][1])
+		vec_b_x = abs(vectors_b[i][1][0] - vectors_b[i][0][0])
+		vec_b_y = abs(vectors_b[i][1][1] - vectors_b[i][0][1])
+
+		dot_result[i] = (vec_a_x * vec_b_x) + (vec_a_y * vec_b_y)
+
+	return dot_result
+
 def find_avg_px_intensity(image,cells_row_column,pixels_per_cell):
 	"""
 	# Determine the average pixel intensity of each cell of a HOG image.
