@@ -532,12 +532,20 @@ while(cap.isOpened()):
         c, d = old.ravel()
         # Draws vector between new and old position
         mask = cv2.arrowedLine(mask, (c,d), (a,b), color, 1, tipLength = 0.2)
-        
+        # Create a new array to store all displacement vectors
         disp_vectors[i] = ((c,d),(a,b))
 
     # Overlays the optical flow tracks on the original frame
     output = cv2.add(frame,mask)
     
+    # ---------- Computation of dot product ----------
+    # Flatten the lamin-density array to line up the data with the displacement vector array
+    vectors = vectors.flatten()
+
+    # WRITE CUSTOM DOT PRODUCT FUNCTION? NP ONE DOESN'T REALLY HELP HERE.
+
+    # ---------- Computation of dot product ----------
+
     # Updates previous frame
     prev_gray = gray.copy()
     
@@ -546,12 +554,41 @@ while(cap.isOpened()):
     
     # Displays the frame overlaid with displacement vectors
     cv2.imshow(f"Sparse Optical Flow: frames {counter-1} to {counter}",output)
-    cv2.waitKey(7500)
-    
+    cv2.waitKey(img_delay)
+
+    # ---------- Overlay both vector sets ----------
+    # Define output image parameters
+    screen_dpi = 227
+    plt.figure(figsize=(len(img_vector)/screen_dpi,len(img_vector)/screen_dpi),dpi=screen_dpi)
+    plt.imshow(
+        output,            # Image name
+        alpha=1.0,              # Transparency setting
+        cmap="Greys_r",         # Grayscale colour map
+        origin="upper",         # Image origin in the top left corner
+        interpolation="none",   # Image blurring off
+        resample=False,         # Image resampling off
+        aspect="equal")         # Image distorting off
+
+    # Draw the vectors
+    plt.quiver(
+        x_positions,            # X coordinate of start point
+        y_positions,            # Y coordinate of start point
+        dx_vals,                # X-direction movement from start point to end point
+        dy_vals,                # Y-direction movement from start point to end point
+        color='r',              # Vector colour (blue)
+        scale_units="dots",     # Vector scaling unit (pixels)
+        scale=0.4,              # Vector scaling factor
+        headwidth=3,            # Vector head width as a multiple of shaft width
+        headlength=3,           # Vector head length as a multiple of shaft length
+        headaxislength=2.5)     # Vector head length at shaft intersection
+
+    # Finalize and display the vector image
+    plt.subplots_adjust(left=0,right=1,bottom=0,top=1)
+    plt.show()
+    # ---------- Overlay both vector sets ----------
+
     # Saves output frames to video
     video.write(output)
-    
-    # --> COMPUTE THE DOT PRODUCT BETWEEN THE TWO VECTOR SETS
 
     # Frames are read by intervals of 100 milliseconds (can change at will depending on video frame rate) 
     # The program breaks out of the while loop when the user presses the 'q' key
