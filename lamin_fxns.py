@@ -16,23 +16,33 @@ import numpy as np
 import cv2
 from PIL import Image
 
-def dot_product(vectors_a, vectors_b):
+def dot_product(physical, temporal, inverted):
 	"""
 	# Compute the dot product between two vector sets.
 	# The vectors must be stored in ((a,b),((c,d))) format, within a flat array.
 	"""
-	if len(vectors_a) != len(vectors_b):
+	if len(physical) != len(temporal):
 		raise IndexError("Vector arrays must be the same length.")
 
-	dot_result = np.zeros(len(vectors_a))
-	for i in range(len(vectors_a)):
-		# Get the x-direction and y-direction lengths for each vector.
-		vec_a_x = abs(vectors_a[i][1][0] - vectors_a[i][0][0])
-		vec_a_y = abs(vectors_a[i][1][1] - vectors_a[i][0][1])
-		vec_b_x = abs(vectors_b[i][1][0] - vectors_b[i][0][0])
-		vec_b_y = abs(vectors_b[i][1][1] - vectors_b[i][0][1])
+	dot_result = np.zeros(len(physical))
+	if inverted:
+		for i in range(len(physical)):
+			# Get the x-direction and y-direction lengths for each vector.
+			vec_a_y = abs(physical[i][1][0] - physical[i][0][0])
+			vec_a_x = abs(physical[i][1][1] - physical[i][0][1])
+			vec_b_x = abs(temporal[i][1][0] - temporal[i][0][0])
+			vec_b_y = abs(temporal[i][1][1] - temporal[i][0][1])
 
-		dot_result[i] = (vec_a_x * vec_b_x) + (vec_a_y * vec_b_y)
+			dot_result[i] = (vec_a_x * vec_b_x) + (vec_a_y * vec_b_y)
+	else:
+		for i in range(len(physical)):
+			# Get the x-direction and y-direction lengths for each vector.
+			vec_a_x = abs(physical[i][1][0] - physical[i][0][0])
+			vec_a_y = abs(physical[i][1][1] - physical[i][0][1])
+			vec_b_x = abs(temporal[i][1][0] - temporal[i][0][0])
+			vec_b_y = abs(temporal[i][1][1] - temporal[i][0][1])
+
+			dot_result[i] = (vec_a_x * vec_b_x) + (vec_a_y * vec_b_y)
 
 	return dot_result
 

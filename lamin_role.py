@@ -533,7 +533,8 @@ while(cap.isOpened()):
     vectors = vectors.flatten()
 
     # Compute the dot product, returned as an array of length len(vectors)
-    dot_prod_result = dot_product(vectors,disp_vectors)
+    # Use keyword arguments to ensure correct function usage.
+    dot_prod_result = dot_product(physical=vectors,temporal=disp_vectors,inverted=True)
 
     # Reconfigure the dot product results for accurate display
     display_dot_result = np.zeros((len(hog_image_rescaled),len(hog_image_rescaled)))
