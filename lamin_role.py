@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 import numpy as np 
 import cv2
 from PIL import Image
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from lamin_fxns import orientation_analysis,find_avg_px_intensity,pad_img,force_3d,dot_product
 
 # The terminal will not skip output lines
@@ -557,17 +558,37 @@ while(cap.isOpened()):
                 for b in range(px_per_cell*j,(px_per_cell*j)+px_per_cell):
                     display_dot_result[a][b] = dot_prod_result[i][j]
 
-    # Define heatmap parameters
-    screen_dpi = 227
-    plt.figure(figsize=(len(img_vector)/screen_dpi,len(img_vector)/screen_dpi),dpi=screen_dpi)
+    # ---------- Heatmap generation ----------
+    # Initialize a new figure
+    plt.figure()
+
+    # Select image for display, as well as colormap used
     plt.imshow(display_dot_result, cmap="hot")
+    
+    # Define colorbar parameters
+    plt.colorbar(orientation="horizontal",      # Horizontal colorbar
+                 label="Dot Product Result",    # Label under colorbar
+                 shrink=0.6,                    # Relative size of colorbar
+                 pad=0.05)                      # Relative distance between colorbar and image
+    
+    # Disable plot ticks
+    plt.tick_params(which="both",       # Modify both x- and y-axes
+                    bottom=False,       # No ticks on bottom of figure
+                    top=False,
+                    left=False,
+                    right=False,
+                    labelbottom=False,  # No tick labels on bottom of figure
+                    labeltop=False,
+                    labelleft=False,
+                    labelright=False)
+
+    # Set figure title
+    plt.title("PLACEHOLDER")
 
     # Display the heatmap according to the dot product results
-    plt.subplots_adjust(left=0,right=1,bottom=0,top=1)
     plt.show()
-
-    # NEXT: ADD COLOUR BAR FOR SCALE + REFINE AND CONFIRM OUTPUT ACCURACY
-
+    # ---------- Heatmap generation ----------
+    
     # Updates previous frame
     prev_gray = gray.copy()
     
