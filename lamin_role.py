@@ -133,12 +133,6 @@ first_frame,multi_channel = force_3d(first_frame)
 cv2.imshow('Sliced to RGB: frame 1',first_frame)
 cv2.waitKey(img_delay)
 
-# Adapts the process to the final image size
-cells_per_row_column = int(len(first_frame)/px_per_cell)
-
-print(len(first_frame))
-print(len(first_frame[0]))
-
 # Control for invalid image sizes (padding)
 if ((len(first_frame)%px_per_cell != 0) and (len(first_frame[0])%px_per_cell != 0)) or (len(first_frame) != len(first_frame[0])):
     print("Frame 1 will now be padded for compatibility purposes.")
@@ -161,8 +155,8 @@ if ((len(first_frame)%px_per_cell != 0) and (len(first_frame[0])%px_per_cell != 
     print("Fatal script error.")
     sys.exit(0)
 
-print(len(first_frame))
-print(len(first_frame[0]))
+# Adapts the process to the final image size
+cells_per_row_column = int(len(first_frame)/px_per_cell)
 
 # Converts frame to grayscale because we only need the luminance channel for detecting edges - less computationally expensive
 prev_gray = cv2.cvtColor(first_frame, cv2.COLOR_BGR2GRAY)
@@ -338,12 +332,6 @@ while(cap.isOpened()):
     cv2.imshow(f'Sliced to RGB: frame {counter}',frame)
     cv2.waitKey(img_delay)
 
-    # Adapts the process to the final image size
-    cells_per_row_column = int(len(frame)/px_per_cell)
-
-    print(len(frame))
-    print(len(frame[0]))
-
     # Control for invalid image sizes (padding)
     if ((len(frame)%px_per_cell != 0) and (len(frame[0])%px_per_cell != 0)) or (len(frame) != len(frame[0])):
         print(f"Frame {counter} will now be padded for compatibility purposes.")
@@ -365,10 +353,10 @@ while(cap.isOpened()):
         print("Double check: invalid frame size.")
         print("Fatal script error.")
         sys.exit(0)
-
-    print(len(first_frame))
-    print(len(first_frame[0]))
     
+    # Adapts the process to the final image size
+    cells_per_row_column = int(len(frame)/px_per_cell)
+
     # Converts each frame to grayscale - we previously only converted the first frame to grayscale
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
@@ -473,7 +461,7 @@ while(cap.isOpened()):
     if sys.argv[3] == "hog":
         display_img = img_vector
     elif sys.argv[3] == "input":
-        display_img = img
+        display_img = frame
     else:
         print("Invalid argument in third position.")
         sys.exit(0)
@@ -511,11 +499,11 @@ while(cap.isOpened()):
     # Define coordinates where movement should be tracked - larger step size = more spaced out vectors
     step_size = px_per_cell
     coords = np.array([[x,y] for x in range(0,width,step_size) for y in range(0,height,step_size)],np.float32)
-    
+
     # Calculation of sparse optical flow by Lucas-Kanade method
     # https://docs.opencv.org/3.0-beta/modules/video/doc/motion_analysis_and_object_tracking.html#calcopticalflowpyrlk
     next_pts, status, error = cv2.calcOpticalFlowPyrLK(prev_gray, gray, coords, None, **lk_params)
-    
+
     # Selects good feature points for previous position
     coords = coords.reshape(-1,1,2)
     good_old = coords[status == 1]
@@ -544,9 +532,6 @@ while(cap.isOpened()):
 
     # Compute the dot product, returned as an array of length len(vectors)
     dot_prod_result = dot_product(vectors,disp_vectors)
-
-    # DOT PRODUCT FAILS FOR WILD TYPE: VECTORS ARE NOT THE SAME LENGTH
-    # CAUSE UNKNOWN
 
     # Reconfigure the dot product results for accurate display
     display_dot_result = np.zeros((len(hog_image_rescaled),len(hog_image_rescaled)))
