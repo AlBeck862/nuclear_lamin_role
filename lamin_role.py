@@ -8,7 +8,7 @@
 
 # Written by Alexander Becker and Justin de Vries
 
-# Importing required libraries
+# Importing required external libraries
 from skimage.io import imread, imshow
 from skimage.feature import hog
 from skimage import exposure
@@ -18,6 +18,8 @@ import numpy as np
 import cv2
 from PIL import Image
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+
+# Importing required custom functions
 from lamin_fxns import orientation_analysis,find_avg_px_intensity,pad_img,force_3d,dot_product
 
 # The terminal will not skip output lines
@@ -626,6 +628,6 @@ while(cap.isOpened()):
     # Increase frame counter by one
     counter += 1
 
-# The following frees up resources and closes all windows
+# Free up resources and close all CV2 windows
 cap.release()
 cv2.destroyAllWindows()
