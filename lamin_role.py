@@ -534,7 +534,9 @@ while(cap.isOpened()):
 
     # Compute the dot product, returned as an array of length len(vectors)
     # Use keyword arguments to ensure correct function usage.
-    dot_prod_result = dot_product(physical=vectors,temporal=disp_vectors,inverted=True)
+    dot_prod_result = dot_product(physical=vectors,     # Physical gradient vectors
+                                temporal=disp_vectors,  # Displacement vectors
+                                inverted=True)          # Rotate physical gradient vectors by 90 degrees?
 
     # Reconfigure the dot product results for accurate display
     display_dot_result = np.zeros((len(hog_image_rescaled),len(hog_image_rescaled)))
