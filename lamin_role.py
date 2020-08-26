@@ -18,9 +18,13 @@ import numpy as np
 import cv2
 from PIL import Image
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+import warnings
 
 # Importing required custom functions
 from lamin_fxns import orientation_analysis,find_avg_px_intensity,pad_img,force_3d,dot_product
+
+# Ignore console warnings
+warnings.filterwarnings("ignore")
 
 # The terminal will not skip output lines
 np.set_printoptions(threshold=sys.maxsize)
@@ -536,17 +540,29 @@ while(cap.isOpened()):
     # Use keyword arguments to ensure correct function usage.
     dot_prod_result = dot_product(physical=vectors,     # Physical gradient vectors
                                 temporal=disp_vectors,  # Displacement vectors
-                                inverted=True)          # Rotate physical gradient vectors by 90 degrees?
+                                inverted=False)         # Rotate physical gradient vectors by 90 degrees?
+
+    # ---------- TEST: FILTER OUT VERY HIGH VALUES ----------
+    for i in range(len(dot_prod_result)):
+        if dot_prod_result[i] > 250:
+            dot_prod_result[i] = 250
+    # ---------- TEST: FILTER OUT VERY HIGH VALUES ----------
+
+    # Get max value in the dot product array
+    dot_prod_max = max(dot_prod_result)
+
+    # Normalize the output
+    normalized_result = np.array([val/dot_prod_max for val in dot_prod_result])
 
     # Reconfigure the dot product results for accurate display
     display_dot_result = np.zeros((len(hog_image_rescaled),len(hog_image_rescaled)))
-    dot_prod_result = dot_prod_result.reshape((cells_per_row_column,cells_per_row_column))
+    normalized_result = normalized_result.reshape((cells_per_row_column,cells_per_row_column))
 
     for i in range(cells_per_row_column):
         for j in range(cells_per_row_column):
             for a in range(px_per_cell*i,(px_per_cell*i)+px_per_cell):
                 for b in range(px_per_cell*j,(px_per_cell*j)+px_per_cell):
-                    display_dot_result[a][b] = dot_prod_result[i][j]
+                    display_dot_result[a][b] = normalized_result[i][j]
 
     # ---------- Heatmap generation ----------
     # Initialize a new figure
