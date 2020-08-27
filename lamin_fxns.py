@@ -52,6 +52,40 @@ def dot_product(physical, temporal, inverted):
 
 	return dot_result
 
+def divide_magnitudes(physical, temporal):
+	"""
+	# Divide the magnitudes of the vectors in each array.
+	"""
+	# Verify vector array format similarity
+	if len(physical) != len(temporal):
+		raise IndexError("Vector arrays must be the same length.")
+	
+	# Initialize an empty array of the appropriate size
+	magnitude_quotient = np.zeros(len(physical))
+	
+	# Compute the magnitudes of each vector
+	for i in range(len(physical)):
+		phys_x = physical[i][1][0] - physical[i][0][0]
+		phys_y = physical[i][1][1] - physical[i][0][1]
+		mag_phys = math.sqrt((phys_x**2)+(phys_y**2))
+		
+		temp_x = temporal[i][1][0] - temporal[i][0][0]
+		temp_y = temporal[i][1][1] - temporal[i][0][1]
+		mag_temp = math.sqrt((temp_x**2)+(temp_y**2))
+
+		# Divide the magnitudes
+		try:
+			magnitude_quotient[i] = mag_phys/mag_temp
+		# In the case where the displacement vector magnitude is 0, the quotient is forced to 0 to avoid a divide-by-zero error
+		except ZeroDivisionError:
+			magnitude_quotient[i] = 0.0
+
+	# Convert 0/0 division results (nan) to zero
+	np.nan_to_num(magnitude_quotient,False)
+
+	return magnitude_quotient
+
+
 def ratio_norm(physical, temporal, inverted):
 	"""
 	# Relate the dot product between physical gradient and displacement vectors to the value of the dot product in the case of perfect alignment.
@@ -63,8 +97,6 @@ def ratio_norm(physical, temporal, inverted):
 	
 	# Initialize an empty array of the appropriate size
 	perfect_dot = np.zeros(len(physical))
-	
-	# Compute the magnitudes of each vector
 	for i in range(len(physical)):
 		phys_x = physical[i][1][0] - physical[i][0][0]
 		phys_y = physical[i][1][1] - physical[i][0][1]

@@ -21,7 +21,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import warnings
 
 # Importing required custom functions
-from lamin_fxns import orientation_analysis,find_avg_px_intensity,pad_img,force_3d,dot_product,ratio_norm
+from lamin_fxns import orientation_analysis,find_avg_px_intensity,pad_img,force_3d,dot_product,ratio_norm,divide_magnitudes
 
 # Ignore console warnings
 warnings.filterwarnings("ignore")
@@ -446,7 +446,7 @@ while(cap.isOpened()):
     max_intensity = np.max(avg_px_intensities)
 
     # Divide each element by the maximum value, normalizing all vector lengths (*3 for visualization purposes only)
-    avg_px_intensities_normalized = 3*(avg_px_intensities/max_intensity)
+    avg_px_intensities_normalized = (avg_px_intensities/max_intensity)
 
     # Define the position and length of each vector (using list comprehensions)
     x_positions = [vectors[i][j][0][0] for i in range(cells_per_row_column) for j in range(cells_per_row_column)]
@@ -555,7 +555,7 @@ while(cap.isOpened()):
     dot_prod_max = max(dot_prod_result)
 
     # Normalize the output and define related parameters
-    normalize = "ratio"
+    normalize = "division"
     if normalize == "max":
         normalized_result = np.array([val/dot_prod_max for val in dot_prod_result])
         tick_vals = None
@@ -566,6 +566,11 @@ while(cap.isOpened()):
         tick_vals = np.array([0.0,0.2,0.4,0.6,0.8,1.0])
         extension="max"
         colorbar_label="Vector Alignment Ratio"
+    elif normalize == "division":
+        normalized_result = divide_magnitudes(physical=vectors,temporal=disp_vectors)
+        tick_vals = None
+        extension="neither"
+        colorbar_label="PLACEHOLDER"
     else:
         normalized_result = dot_prod_result
         tick_vals = None
