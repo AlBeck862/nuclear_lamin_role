@@ -15,16 +15,22 @@ import matplotlib.pyplot as plt
 import numpy as np 
 import cv2
 from PIL import Image
+import math
 
 def dot_product(physical, temporal, inverted):
 	"""
 	# Compute the dot product between two vector sets.
 	# The vectors must be stored in ((a,b),((c,d))) format, within a flat array.
 	"""
+	# Verify vector array format similarity
 	if len(physical) != len(temporal):
 		raise IndexError("Vector arrays must be the same length.")
 
+	# Initialize an empty array of the appropriate size
 	dot_result = np.zeros(len(physical))
+	
+	# Compute the dot product on the original pixel gradient vectors (inverted=False)
+	# or those vectors rotated 90 degrees (inverted=True)
 	if inverted:
 		for i in range(len(physical)):
 			# Get the x-direction and y-direction lengths for each vector.
@@ -45,6 +51,42 @@ def dot_product(physical, temporal, inverted):
 			dot_result[i] = (vec_a_x * vec_b_x) + (vec_a_y * vec_b_y)
 
 	return dot_result
+
+def ratio_norm(physical, temporal, inverted):
+	"""
+	# Relate the dot product between physical gradient and displacement vectors to the value of the dot product in the case of perfect alignment.
+	# Calls the dot_product function.
+	"""
+	# Verify vector array format similarity
+	if len(physical) != len(temporal):
+		raise IndexError("Vector arrays must be the same length.")
+	
+	# Initialize an empty array of the appropriate size
+	perfect_dot = np.zeros(len(physical))
+	
+	# Compute the magnitudes of each vector
+	for i in range(len(physical)):
+		phys_x = physical[i][1][0] - physical[i][0][0]
+		phys_y = physical[i][1][1] - physical[i][0][1]
+		mag_phys = math.sqrt((phys_x**2)+(phys_y**2))
+		
+		temp_x = temporal[i][1][0] - temporal[i][0][0]
+		temp_y = temporal[i][1][1] - temporal[i][0][1]
+		mag_temp = math.sqrt((temp_x**2)+(temp_y**2))
+
+		# Simulate a dot product where the vectors are always perfectly aligned
+		perfect_dot[i] = mag_phys * mag_temp
+
+	# Obtain the actual dot product between vectors
+	true_dot = dot_product(physical=physical,temporal=temporal,inverted=inverted)
+
+	# Compute the ratio between the true dot product value and the perfect alignment equivalents
+	norm_result = np.array([true_dot[val]/perfect_dot[val] for val in range(len(physical))])
+	
+	# Convert 0/0 division results (nan) to zero
+	np.nan_to_num(norm_result,False)
+
+	return norm_result
 
 def find_avg_px_intensity(image,cells_row_column,pixels_per_cell):
 	"""

@@ -21,7 +21,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import warnings
 
 # Importing required custom functions
-from lamin_fxns import orientation_analysis,find_avg_px_intensity,pad_img,force_3d,dot_product
+from lamin_fxns import orientation_analysis,find_avg_px_intensity,pad_img,force_3d,dot_product,ratio_norm
 
 # Ignore console warnings
 warnings.filterwarnings("ignore")
@@ -105,6 +105,9 @@ fifth_angle_coords = ((1,2),(6,5))
 sixth_angle_coords = ((2,1),(5,6))
 seventh_angle_coords = ((3,1),(4,6))
 angle_coords = (first_angle_coords,second_angle_coords,third_angle_coords,fourth_angle_coords,fifth_angle_coords,sixth_angle_coords,seventh_angle_coords)
+
+# Rotate physical gradient vectors 90 degrees?
+inversion = False
 
 # Parameters for Lucas-Kanade optical flow
 lk_params = dict(winSize = (45,45), maxLevel = 30, criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
@@ -540,19 +543,34 @@ while(cap.isOpened()):
     # Use keyword arguments to ensure correct function usage.
     dot_prod_result = dot_product(physical=vectors,     # Physical gradient vectors
                                 temporal=disp_vectors,  # Displacement vectors
-                                inverted=False)         # Rotate physical gradient vectors by 90 degrees?
+                                inverted=inversion)         # Rotate physical gradient vectors by 90 degrees?
 
     # ---------- TEST: FILTER OUT VERY HIGH VALUES ----------
-    for i in range(len(dot_prod_result)):
-        if dot_prod_result[i] > 250:
-            dot_prod_result[i] = 250
+    # for i in range(len(dot_prod_result)):
+    #     if dot_prod_result[i] > 250:
+    #         dot_prod_result[i] = 250
     # ---------- TEST: FILTER OUT VERY HIGH VALUES ----------
 
     # Get max value in the dot product array
     dot_prod_max = max(dot_prod_result)
 
-    # Normalize the output
-    normalized_result = np.array([val/dot_prod_max for val in dot_prod_result])
+    # Normalize the output and define related parameters
+    normalize = "ratio"
+    if normalize == "max":
+        normalized_result = np.array([val/dot_prod_max for val in dot_prod_result])
+        tick_vals = None
+        extension="neither"
+        colorbar_label="Dot Product Result Normalized to Max"
+    elif normalize == "ratio":
+        normalized_result = ratio_norm(physical=vectors,temporal=disp_vectors,inverted=inversion)
+        tick_vals = np.array([0.0,0.2,0.4,0.6,0.8,1.0])
+        extension="max"
+        colorbar_label="Vector Alignment Ratio"
+    else:
+        normalized_result = dot_prod_result
+        tick_vals = None
+        extension="neither"
+        colorbar_label="Dot Product Result"
 
     # Reconfigure the dot product results for accurate display
     display_dot_result = np.zeros((len(hog_image_rescaled),len(hog_image_rescaled)))
@@ -573,9 +591,12 @@ while(cap.isOpened()):
     
     # Define colorbar parameters
     plt.colorbar(orientation="horizontal",      # Horizontal colorbar
-                 label="Dot Product Result",    # Label under colorbar
+                 label=colorbar_label,          # Label under colorbar
                  shrink=0.6,                    # Relative size of colorbar
-                 pad=0.05)                      # Relative distance between colorbar and image
+                 pad=0.05,                      # Relative distance between colorbar and image
+                 ticks=tick_vals,               # Define the colorbar ticks
+                 extend=extension,              # Type of colorbar, if applicable
+                 extendrect=True)               # Type of colorbar extension, if applicable
     
     # Disable plot ticks
     plt.tick_params(which="both",       # Modify both x- and y-axes
