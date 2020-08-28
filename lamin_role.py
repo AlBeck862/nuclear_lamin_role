@@ -459,7 +459,13 @@ while(cap.isOpened()):
     # Divide each element by the maximum value, normalizing all vector lengths (*3 for visualization purposes only)
     avg_px_intensities_normalized = (avg_px_intensities/max_intensity)
 
-    # Define the position and length of each vector (using list comprehensions)
+    # Store the initial vector data for the vector overlap image later on
+    old_x_positions = x_positions
+    old_y_positions = y_positions
+    old_dx_vals = np.array(dx_vals)
+    old_dy_vals = np.array(dy_vals)
+
+    # Define the (new) position and length of each vector (using list comprehensions)
     x_positions = [vectors[i][j][0][0] for i in range(cells_per_row_column) for j in range(cells_per_row_column)]
     y_positions = [vectors[i][j][0][1] for i in range(cells_per_row_column) for j in range(cells_per_row_column)]
     dx_vals = [(vectors[i][j][1][0]-vectors[i][j][0][0])*avg_px_intensities_normalized[i][j] for i in range(cells_per_row_column) for j in range(cells_per_row_column)]
@@ -550,11 +556,11 @@ while(cap.isOpened()):
     # Flatten the lamin-density array to line up the data with the displacement vector array
     heatmap_vectors = heatmap_vectors.flatten()
 
-    # Compute the dot product, returned as an array of length len(vectors)
+    # Compute the dot product, returned as an array of length len(heatmap_vectors)
     # Use keyword arguments to ensure correct function usage.
     dot_prod_result = dot_product(physical=heatmap_vectors,     # Physical gradient vectors
-                                temporal=disp_vectors,  # Displacement vectors
-                                inverted=inversion)     # Rotate physical gradient vectors by 90 degrees?
+                                temporal=disp_vectors,          # Displacement vectors
+                                inverted=inversion)             # Rotate physical gradient vectors by 90 degrees?
 
     # Get max value in the dot product array
     dot_prod_max = max(dot_prod_result)
@@ -635,36 +641,35 @@ while(cap.isOpened()):
     cv2.imshow(f"Sparse Optical Flow: frames {counter-1} to {counter}",output)
     cv2.waitKey(img_delay)
 
-    # IMPORTANT: THIS INCORRECTLY VERLAYS THE *FINAL* GRADIENT VECTORS ON TOP OF THE DISPLACEMENT VECTORS
     # ---------- Overlay both vector sets ----------
     # Define output image parameters
-    # screen_dpi = 227
-    # plt.figure(figsize=(len(img_vector)/screen_dpi,len(img_vector)/screen_dpi),dpi=screen_dpi)
-    # plt.imshow(
-    #     output,                 # Image name
-    #     alpha=1.0,              # Transparency setting
-    #     cmap="Greys_r",         # Grayscale colour map
-    #     origin="upper",         # Image origin in the top left corner
-    #     interpolation="none",   # Image blurring off
-    #     resample=False,         # Image resampling off
-    #     aspect="equal")         # Image distorting off
+    screen_dpi = 227
+    plt.figure(figsize=(len(img_vector)/screen_dpi,len(img_vector)/screen_dpi),dpi=screen_dpi)
+    plt.imshow(
+        output,                 # Image name
+        alpha=1.0,              # Transparency setting
+        cmap="Greys_r",         # Grayscale colour map
+        origin="upper",         # Image origin in the top left corner
+        interpolation="none",   # Image blurring off
+        resample=False,         # Image resampling off
+        aspect="equal")         # Image distorting off
 
-    # # Draw the vectors
-    # plt.quiver(
-    #     x_positions,            # X coordinate of start point
-    #     y_positions,            # Y coordinate of start point
-    #     dx_vals,                # X-direction movement from start point to end point
-    #     dy_vals,                # Y-direction movement from start point to end point
-    #     color='r',              # Vector colour (red)
-    #     scale_units="dots",     # Vector scaling unit (pixels)
-    #     scale=0.4,              # Vector scaling factor
-    #     headwidth=3,            # Vector head width as a multiple of shaft width
-    #     headlength=3,           # Vector head length as a multiple of shaft length
-    #     headaxislength=2.5)     # Vector head length at shaft intersection
+    # Draw the vectors
+    plt.quiver(
+        old_x_positions,      # X coordinate of start point
+        old_y_positions,      # Y coordinate of start point
+        3*old_dx_vals,        # X-direction movement from start point to end point
+        3*old_dy_vals,        # Y-direction movement from start point to end point
+        color='r',            # Vector colour (red)
+        scale_units="dots",   # Vector scaling unit (pixels)
+        scale=0.4,            # Vector scaling factor
+        headwidth=3,          # Vector head width as a multiple of shaft width
+        headlength=3,         # Vector head length as a multiple of shaft length
+        headaxislength=2.5)   # Vector head length at shaft intersection
 
-    # # Finalize and display the vector image
-    # plt.subplots_adjust(left=0,right=1,bottom=0,top=1)
-    # plt.show()
+    # Finalize and display the vector image
+    plt.subplots_adjust(left=0,right=1,bottom=0,top=1)
+    plt.show()
     # ---------- Overlay both vector sets ----------
 
     # Saves output frames to video
