@@ -3,7 +3,7 @@
 * usage: python3 lamin_role.py
 *				<.mp4 file name>			# Name of video
 *				<cv2 image linger in ms>	# Delay (milliseconds) between CV2 images
-*				<"hog" OR "input">			# Select "hog" for vectors to be overlayed on the HOG image, or "input" for vectors to be overlayed on the original image
+*				<"hog" OR "input">			# Select "hog" for vectors to be overlaid on the HOG image, or "input" for vectors to be overlayed on the original image
 """
 
 # Written by Alexander Becker and Justin de Vries
@@ -22,6 +22,20 @@ import warnings
 
 # Importing required custom functions
 from lamin_fxns import orientation_analysis,find_avg_px_intensity,pad_img,force_3d,dot_product,ratio_norm,divide_magnitudes
+
+# ---------- Output Parameters ----------
+# Rotate physical gradient vectors 90 degrees?
+inversion = False
+
+# Heatmap normalization method
+normalize = "no"
+
+# Delay (milliseconds) between CV2 images
+img_delay = int(sys.argv[2])
+
+# Select "hog" for vectors to be overlaid on the HOG image, or "input" for vectors to be overlayed on the original image 
+overlay_img = sys.argv[3]
+# ---------- Output Parameters ----------
 
 # Ignore console warnings
 warnings.filterwarnings("ignore")
@@ -106,17 +120,11 @@ sixth_angle_coords = ((2,1),(5,6))
 seventh_angle_coords = ((3,1),(4,6))
 angle_coords = (first_angle_coords,second_angle_coords,third_angle_coords,fourth_angle_coords,fifth_angle_coords,sixth_angle_coords,seventh_angle_coords)
 
-# Rotate physical gradient vectors 90 degrees?
-inversion = False
-
 # Parameters for Lucas-Kanade optical flow
 lk_params = dict(winSize = (45,45), maxLevel = 30, criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
 
 # The video feed is read in as a VideoCapture object
 cap = cv2.VideoCapture(sys.argv[1])
-
-# Set global CV2 image delay
-img_delay = int(sys.argv[2])
 
 # Variable for color to draw optical flow track - (B,G,R)
 color = (0, 0, 255)
@@ -268,9 +276,9 @@ for i in range(cells_per_row_column):
 img_vector = hog_image_rescaled
 
 # Set the image on which vectors will be overlayed
-if sys.argv[3] == "hog":
+if overlay_img == "hog":
     display_img = img_vector
-elif sys.argv[3] == "input":
+elif overlay_img == "input":
     display_img = img
 else:
     print("Invalid argument in third position.")
@@ -470,9 +478,9 @@ while(cap.isOpened()):
     img_vector = hog_image_rescaled
 
     # Set the image on which vectors will be overlayed
-    if sys.argv[3] == "hog":
+    if overlay_img == "hog":
         display_img = img_vector
-    elif sys.argv[3] == "input":
+    elif overlay_img == "input":
         display_img = frame
     else:
         print("Invalid argument in third position.")
@@ -552,7 +560,6 @@ while(cap.isOpened()):
     dot_prod_max = max(dot_prod_result)
     
     # Normalize the output and define related parameters
-    normalize = "no"
     if normalize == "max":
         normalized_result = np.array([val/dot_prod_max for val in dot_prod_result])
         tick_vals = None
