@@ -28,7 +28,10 @@ from lamin_fxns import orientation_analysis,find_avg_px_intensity,pad_img,force_
 inversion = False
 
 # Heatmap normalization method
-normalize = "no"
+normalize = "no"    # Options: "no", "ratio", "max", "division"
+
+# Vector scaling reference image (original input image OR HOG image)
+vector_scaling = "hog" # Options: "hog", "original"
 
 # Delay (milliseconds) between CV2 images
 img_delay = int(sys.argv[2])
@@ -178,9 +181,6 @@ cells_per_row_column = int(len(first_frame)/px_per_cell)
 # Converts frame to grayscale because we only need the luminance channel for detecting edges - less computationally expensive
 prev_gray = cv2.cvtColor(first_frame, cv2.COLOR_BGR2GRAY)
 
-# Compute and store cell-specific average pixel intensities
-avg_px_intensities = find_avg_px_intensity(prev_gray,cells_per_row_column,px_per_cell)
-
 # Generate the HOG feature vector and image
 fd, hog_image = hog(first_frame, orientations=9, pixels_per_cell=(px_per_cell, px_per_cell), 
                     cells_per_block=(2, 2), visualize=True, multichannel=multi_channel, feature_vector=False)
@@ -194,6 +194,15 @@ hog_image_rescaled = exposure.rescale_intensity(hog_image, in_range=(0,10))
 # Display the basic (unmodified) HOG image
 cv2.imshow(f'HOG Default: frame 1', hog_image_rescaled)
 cv2.waitKey(img_delay)
+
+# Compute and store cell-specific average pixel intensities
+if vector_scaling == "hog":
+    avg_px_intensities = find_avg_px_intensity(hog_image_rescaled,cells_per_row_column,px_per_cell)
+elif vector_scaling == "original":
+    avg_px_intensities = find_avg_px_intensity(prev_gray,cells_per_row_column,px_per_cell)
+else:
+    print("Invalid vector scaling parameter.")
+    sys.exit(0)
 
 # ---------- Image cell manipulation ----------
 # Create the vector data array: one pair of coordinates for each gradient line
@@ -377,9 +386,6 @@ while(cap.isOpened()):
     # Converts each frame to grayscale - we previously only converted the first frame to grayscale
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-    # Compute and store cell-specific average pixel intensities
-    avg_px_intensities = find_avg_px_intensity(gray,cells_per_row_column,px_per_cell)
-
     # Generate the HOG feature vector and image
     fd, hog_image = hog(frame, orientations=9, pixels_per_cell=(px_per_cell, px_per_cell), 
                         cells_per_block=(2, 2), visualize=True, multichannel=multi_channel, feature_vector=False)
@@ -393,6 +399,15 @@ while(cap.isOpened()):
     # Display the basic (unmodified) HOG image
     cv2.imshow(f'HOG Default: frame {counter}', hog_image_rescaled)
     cv2.waitKey(img_delay)
+
+    # Compute and store cell-specific average pixel intensities
+    if vector_scaling == "hog":
+        avg_px_intensities = find_avg_px_intensity(hog_image_rescaled,cells_per_row_column,px_per_cell)
+    elif vector_scaling == "original":
+        avg_px_intensities = find_avg_px_intensity(gray,cells_per_row_column,px_per_cell)
+    else:
+        print("Invalid vector scaling parameter.")
+        sys.exit(0)
 
     # Store the "previous" set of vectors for later use to genearte the heatmap
     heatmap_vectors = vectors
