@@ -28,7 +28,7 @@ from lamin_fxns import orientation_analysis,find_avg_px_intensity,pad_img,force_
 inversion = False
 
 # Heatmap normalization method
-normalize = "no"    # Options: "no", "ratio", "max", "division"
+normalize = "no"    # Options: "no", "ratio", "max", "division", "flip_division"
 
 # Vector scaling reference image (original input image OR HOG image)
 vector_scaling = "hog" # Options: "hog", "original"
@@ -195,15 +195,6 @@ hog_image_rescaled = exposure.rescale_intensity(hog_image, in_range=(0,10))
 cv2.imshow(f'HOG Default: frame 1', hog_image_rescaled)
 cv2.waitKey(img_delay)
 
-# Compute and store cell-specific average pixel intensities
-if vector_scaling == "hog":
-    avg_px_intensities = find_avg_px_intensity(hog_image_rescaled,cells_per_row_column,px_per_cell)
-elif vector_scaling == "original":
-    avg_px_intensities = find_avg_px_intensity(prev_gray,cells_per_row_column,px_per_cell)
-else:
-    print("Invalid vector scaling parameter.")
-    sys.exit(0)
-
 # ---------- Image cell manipulation ----------
 # Create the vector data array: one pair of coordinates for each gradient line
 vectors = np.zeros((cells_per_row_column,cells_per_row_column),dtype=object)
@@ -257,6 +248,15 @@ print("Gradient selection success: frame 1")
 # Display the grayscale selected-gradients image
 cv2.imshow('Selected Gradients: frame 1',hog_image_rescaled)
 cv2.waitKey(img_delay)
+
+# Compute and store cell-specific average pixel intensities
+if vector_scaling == "hog":
+    avg_px_intensities = find_avg_px_intensity(hog_image_rescaled,cells_per_row_column,px_per_cell)
+elif vector_scaling == "original":
+    avg_px_intensities = find_avg_px_intensity(prev_gray,cells_per_row_column,px_per_cell)
+else:
+    print("Invalid vector scaling parameter.")
+    sys.exit(0)
 # ---------- Image cell manipulation ----------
 
 # ---------- Generate and display gradient vectors ----------
@@ -400,15 +400,6 @@ while(cap.isOpened()):
     cv2.imshow(f'HOG Default: frame {counter}', hog_image_rescaled)
     cv2.waitKey(img_delay)
 
-    # Compute and store cell-specific average pixel intensities
-    if vector_scaling == "hog":
-        avg_px_intensities = find_avg_px_intensity(hog_image_rescaled,cells_per_row_column,px_per_cell)
-    elif vector_scaling == "original":
-        avg_px_intensities = find_avg_px_intensity(gray,cells_per_row_column,px_per_cell)
-    else:
-        print("Invalid vector scaling parameter.")
-        sys.exit(0)
-
     # Store the "previous" set of vectors for later use to genearte the heatmap
     heatmap_vectors = vectors
 
@@ -465,6 +456,15 @@ while(cap.isOpened()):
     # Display the grayscale selected-gradients image
     cv2.imshow(f'Selected Gradients: frame {counter}',hog_image_rescaled)
     cv2.waitKey(img_delay)
+
+    # Compute and store cell-specific average pixel intensities
+    if vector_scaling == "hog":
+        avg_px_intensities = find_avg_px_intensity(hog_image_rescaled,cells_per_row_column,px_per_cell)
+    elif vector_scaling == "original":
+        avg_px_intensities = find_avg_px_intensity(gray,cells_per_row_column,px_per_cell)
+    else:
+        print("Invalid vector scaling parameter.")
+        sys.exit(0)
     # ---------- Image cell manipulation ----------
 
     # ---------- Generate and display gradient vectors ----------
@@ -596,6 +596,11 @@ while(cap.isOpened()):
         tick_vals = None
         extension="neither"
         colorbar_label="PLACEHOLDER"
+    elif normalize == "flip_division":
+        normalized_result = divide_magnitudes(physical=disp_vectors,temporal=heatmap_vectors) # The reverse of physical and temporal vectors here is intentional.
+        tick_vals = None
+        extension="neither"
+        colorbar_label="PLACEHOLDER"
     else:
         normalized_result = dot_prod_result
         tick_vals = None
@@ -603,21 +608,21 @@ while(cap.isOpened()):
         colorbar_label="Dot Product Result"
 
     # Reconfigure the dot product results for accurate display
-    display_dot_result = np.zeros((len(hog_image_rescaled),len(hog_image_rescaled)))
+    display_result = np.zeros((len(hog_image_rescaled),len(hog_image_rescaled)))
     normalized_result = normalized_result.reshape((cells_per_row_column,cells_per_row_column))
 
     for i in range(cells_per_row_column):
         for j in range(cells_per_row_column):
             for a in range(px_per_cell*i,(px_per_cell*i)+px_per_cell):
                 for b in range(px_per_cell*j,(px_per_cell*j)+px_per_cell):
-                    display_dot_result[a][b] = normalized_result[i][j]
+                    display_result[a][b] = normalized_result[i][j]
 
     # ---------- Heatmap generation ----------
     # Initialize a new figure
     plt.figure()
 
     # Select image for display, as well as colormap used
-    plt.imshow(display_dot_result, cmap="hot")
+    plt.imshow(display_result, cmap="hot")
     
     # Define colorbar parameters
     plt.colorbar(orientation="horizontal",      # Horizontal colorbar

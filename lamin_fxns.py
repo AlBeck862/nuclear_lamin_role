@@ -83,6 +83,11 @@ def divide_magnitudes(physical, temporal):
 	# Convert 0/0 division results (nan) to zero
 	np.nan_to_num(magnitude_quotient,False)
 
+	# Uncomment to limit magnitude values to a certain amount
+	# for i in range(len(magnitude_quotient)):
+	# 	if magnitude_quotient[i] > 50.0:
+	# 		magnitude_quotient[i] = 50.0
+
 	return magnitude_quotient
 
 
