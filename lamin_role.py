@@ -288,7 +288,7 @@ img_vector = hog_image_rescaled
 if overlay_img == "hog":
     display_img = img_vector
 elif overlay_img == "input":
-    display_img = img
+    display_img = first_frame
 else:
     print("Invalid argument in third position.")
     sys.exit(0)
