@@ -90,6 +90,31 @@ def divide_magnitudes(physical, temporal):
 
 	return magnitude_quotient
 
+def compute_magnitudes(physical, temporal):
+	"""
+	# Compute magnitudes of the vectors in each array.
+	"""
+	# Verify vector array format similarity
+	if len(physical) != len(temporal):
+		raise IndexError("Vector arrays must be the same length.")
+
+	# Initialize empty arrays for the magnitudes
+	magnitude_physical = np.zeros(len(physical))
+	magnitude_temporal = np.zeros(len(temporal))
+
+	# Compute the magnitudes of each vector
+	for i in range(len(physical)):
+		phys_x = physical[i][1][0] - physical[i][0][0]
+		phys_y = physical[i][1][1] - physical[i][0][1]
+		magnitude_physical[i] = math.sqrt((phys_x**2)+(phys_y**2))
+		
+		temp_x = temporal[i][1][0] - temporal[i][0][0]
+		temp_y = temporal[i][1][1] - temporal[i][0][1]
+		magnitude_temporal[i] = math.sqrt((temp_x**2)+(temp_y**2))
+
+	# Return the magnitudes
+	return magnitude_physical,magnitude_temporal
+
 
 def ratio_norm(physical, temporal, inverted):
 	"""

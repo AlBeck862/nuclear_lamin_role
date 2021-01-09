@@ -21,7 +21,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import warnings
 
 # Importing required custom functions
-from lamin_fxns import orientation_analysis,find_avg_px_intensity,pad_img,force_3d,dot_product,ratio_norm,divide_magnitudes
+from lamin_fxns import *
 
 # ---------- Output Parameters ----------
 # Rotate physical gradient vectors 90 degrees?
@@ -124,7 +124,7 @@ seventh_angle_coords = ((3,1),(4,6))
 angle_coords = (first_angle_coords,second_angle_coords,third_angle_coords,fourth_angle_coords,fifth_angle_coords,sixth_angle_coords,seventh_angle_coords)
 
 # Parameters for Lucas-Kanade optical flow
-lk_params = dict(winSize = (45,45), maxLevel = 30, criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
+lk_params = dict(winSize = (30,30), maxLevel = 30, criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 3, 0.03))
 
 # The video feed is read in as a VideoCapture object
 cap = cv2.VideoCapture(sys.argv[1])
@@ -331,7 +331,7 @@ width = len(first_frame)
 height = len(first_frame[0])
 
 # Creates a video file for saving output at 20 fps (can change at will)
-video = cv2.VideoWriter("result.mov",cv2.VideoWriter_fourcc(*'avc1'),20,(width,height))
+video = cv2.VideoWriter("result.mov",cv2.VideoWriter_fourcc(*'mp4v'),1,(width,height))
 video.write(first_frame)
 
 counter = 2
@@ -400,7 +400,7 @@ while(cap.isOpened()):
     cv2.imshow(f'HOG Default: frame {counter}', hog_image_rescaled)
     cv2.waitKey(img_delay)
 
-    # Store the "previous" set of vectors for later use to genearte the heatmap
+    # Store the "previous" set of vectors for later use to generate the heatmap
     heatmap_vectors = vectors
 
     # ---------- Image cell manipulation ----------
@@ -617,6 +617,22 @@ while(cap.isOpened()):
                 for b in range(px_per_cell*j,(px_per_cell*j)+px_per_cell):
                     display_result[a][b] = normalized_result[i][j]
 
+    # ---------- Vector Magnitude Plot ----------
+    # Compute vector magnitudes
+    physical_mag,temporal_mag = compute_magnitudes(physical=heatmap_vectors,temporal=disp_vectors)
+
+    # Initialize a new figure
+    plt.figure()
+
+    # Plot the displacement mangitudes against the intensity magnitudes
+    plt.plot(physical_mag,temporal_mag,linestyle="None",marker=".",markersize=3.0)
+
+    # Set plot properties
+    plt.title("Displacement versus Intensity")
+    plt.xlabel("Intensity")
+    plt.ylabel("Displacement")
+    # ---------- Vector Magnitude Plot ----------
+
     # ---------- Heatmap generation ----------
     # Initialize a new figure
     plt.figure()
@@ -678,8 +694,8 @@ while(cap.isOpened()):
     plt.quiver(
         old_x_positions,      # X coordinate of start point
         old_y_positions,      # Y coordinate of start point
-        3*old_dx_vals,        # X-direction movement from start point to end point
-        3*old_dy_vals,        # Y-direction movement from start point to end point
+        old_dx_vals,        # X-direction movement from start point to end point
+        old_dy_vals,        # Y-direction movement from start point to end point
         color='r',            # Vector colour (red)
         scale_units="dots",   # Vector scaling unit (pixels)
         scale=0.4,            # Vector scaling factor
