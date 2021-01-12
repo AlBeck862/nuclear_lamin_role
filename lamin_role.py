@@ -22,6 +22,7 @@ import warnings
 
 # Importing required custom functions
 from lamin_fxns import *
+from lamin_image import LaminImage
 
 # ---------- Output Parameters ----------
 # Rotate physical gradient vectors 90 degrees?
@@ -31,7 +32,7 @@ inversion = False
 normalize = "no"    # Options: "no", "ratio", "max", "division", "flip_division"
 
 # Vector scaling reference image (original input image OR HOG image)
-vector_scaling = "hog" # Options: "hog", "original"
+vector_scaling = "original" # Options: "hog", "original"
 
 # Delay (milliseconds) between CV2 images
 img_delay = int(sys.argv[2])
@@ -138,62 +139,28 @@ px_per_cell = 8
 # ret = a boolean return value from getting the frame, first_frame = the first frame in the entire video sequence
 ret, first_frame = cap.read()
 
-# Announce the frame currently being processed
-print("***NOTICE***")
-print("Now processing frame #1")
-
-# Display the first frame
-cv2.imshow('Unaltered Frame: frame 1',first_frame)
-cv2.waitKey(img_delay)
-
-# Force the frame to be RGB (three-dimensional)
-first_frame,multi_channel = force_3d(first_frame)
-
-# Display sliced image
-cv2.imshow('Sliced to RGB: frame 1',first_frame)
-cv2.waitKey(img_delay)
-
-# Control for invalid image sizes (padding)
-if ((len(first_frame)%px_per_cell != 0) and (len(first_frame[0])%px_per_cell != 0)) or (len(first_frame) != len(first_frame[0])):
-    print("Frame 1 will now be padded for compatibility purposes.")
-    first_frame = pad_img(first_frame,px_per_cell)
-    
-    # Acknowledge padding of frame
-    print("Padding success")
-
-    # Display padded frame
-    cv2.imshow('Padded: frame 1',first_frame)
-    cv2.waitKey(img_delay)
-
-else:
-    print("Frame 1 is compatible with this script.")
-    print("Padding is not necessary.")
-
-# Failsafe double check
-if ((len(first_frame)%px_per_cell != 0) and (len(first_frame[0])%px_per_cell != 0)) or (len(first_frame) != len(first_frame[0])):
-    print("Double check: invalid frame size.")
-    print("Fatal script error.")
-    sys.exit(0)
+# Create a new image object
+test_frame = LaminImage(first_frame,px_per_cell,img_delay)
+test_frame.show_image() #show the imported image
+multi_channel = test_frame.force_3d() #convert to RGB
+test_frame.show_image() #show the RGB image
+test_frame.pad() #pad
+test_frame.show_image() #show the padded image
 
 # Adapts the process to the final image size
-cells_per_row_column = int(len(first_frame)/px_per_cell)
+cells_per_row_column = int(len(test_frame.image)/test_frame.px_per_cell)
 
-# Converts frame to grayscale because we only need the luminance channel for detecting edges - less computationally expensive
-prev_gray = cv2.cvtColor(first_frame, cv2.COLOR_BGR2GRAY)
+# Store the original (non-HOG) image's grayscale data for later use
+prev_gray = cv2.cvtColor(test_frame.image, cv2.COLOR_BGR2GRAY)
 
-# Generate the HOG feature vector and image
-fd, hog_image = hog(first_frame, orientations=9, pixels_per_cell=(px_per_cell, px_per_cell), 
-                    cells_per_block=(2, 2), visualize=True, multichannel=multi_channel, feature_vector=False)
+first_frame = test_frame.image #temporary compatibility solution: mask requires first_frame (currently, line 294) *********************
 
-# Acknowledge HOG generation
-print("HOG generation success: frame 1")
+test_frame.compute_hog()
+test_frame.show_image() #show the (rescaled) HOG image
 
-# Rescale histogram for better display
-hog_image_rescaled = exposure.rescale_intensity(hog_image, in_range=(0,10))
+hog_image_rescaled = test_frame.image #temporary compatibility solution: return to original image format ********************
 
-# Display the basic (unmodified) HOG image
-cv2.imshow(f'HOG Default: frame 1', hog_image_rescaled)
-cv2.waitKey(img_delay)
+###### UNALTERED ORIGINAL SCRIPT ######
 
 # ---------- Image cell manipulation ----------
 # Create the vector data array: one pair of coordinates for each gradient line
